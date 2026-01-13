@@ -4,7 +4,7 @@ import { FaEllipsisV, FaInfoCircle ,FaFilter, FaPhone, FaPlus, FaSearch, FaVideo
 function ChatArea() {
   return (
    <>
-     <div className="w-4/5 border-2 border-yellow-500 bg-gray-200 ">
+     <div className="hidden md:block md:w-1/2 lg:w-4/5 border-2 border-yellow-500 bg-gray-200 ">
       {/* top header */}
       <div className='w-full flex flex-row h-12 mb-1 bg-white'>
           <div className="w-4/5 flex items-center gap-1 ml-2">

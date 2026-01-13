@@ -5,7 +5,7 @@ import { FaEllipsisV, FaFilter, FaPlus } from "react-icons/fa";
 function Chatbar () {
   return (
   <>
-    <div className="w-1/5 border-2 border-yellow-500 bg-gray-300">
+    <div className="w-full md:w-1/2 lg:w-1/5 border-2 border-yellow-500 bg-gray-300">
 
     {/* Chat tag */}
       <div className="w-full h-8 flex mt-2">
@@ -86,137 +86,176 @@ function Chatbar () {
       {/* Chats */}
 
       <div className="flex flex-col p-2">
-        {/* a user chat  */}
-        <div className="w-full h-12 flex flex-row justify-between gap-1 mt-2 bg-white ">
-        <div className="flex items-center ml-2">
-          <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex flex-col pl-2">
-              <span className="">Misbah Sehar</span>
-              <span className="text-xs text-gray-600">User</span>
+        {/* a user chat */}
+        <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
+
+          {/* Left side */}
+          <div className="flex items-center gap-1 min-w-0">
+            <img
+              src="/defaultuser.JPG"
+              alt="avatar"
+              className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+            />
+
+            <div className="flex flex-col min-w-0">
+              <p className=" truncate"> Misbah Sehar</p>
+              <span className="text-xs text-gray-600 truncate">
+                User
+              </span>
             </div>
-        </div>
-        <div className="flex items-right">
-          <div className="flex flex-col items-center p-2">
-            <span className="text-[10px] font-semibold">Yesterday</span>
-            <span className="text-[10px] text-gray-600">User</span>
           </div>
-        </div>     
-      </div>
+
+          {/* Right side */}
+          <div className="flex flex-col items-center flex-shrink-0">
+            <span className="text-[10px] font-semibold whitespace-nowrap">
+              Yesterday
+            </span>
+            <span className="text-[10px] text-gray-600 whitespace-nowrap">
+              User
+            </span>
+          </div>
+
+        </div>
+
 {/* ----------------------------- */}
-        <div className="w-full h-12 flex flex-row justify-between gap-1 mt-2 bg-white">
-        <div className="flex items-center ml-2">
-          <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex flex-col pl-2">
-              <span className="">Misbah Sehar</span>
-              <span className="text-xs text-gray-600">User</span>
-            </div>
-        </div>
-        <div className="flex items-right">
-          <div className="flex flex-col items-center p-2">
-            <span className="text-[10px] font-semibold">Yesterday</span>
-            <span className="text-[10px] text-gray-600">User</span>
-          </div>
-        </div>     
-      </div>
-        <div className="w-full h-12 flex flex-row justify-between gap-1 mt-2 bg-white">
-        <div className="flex items-center ml-2">
-          <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex flex-col pl-2">
-              <span className="">Misbah Sehar</span>
-              <span className="text-xs text-gray-600">User</span>
-            </div>
-        </div>
-        <div className="flex items-right">
-          <div className="flex flex-col items-center p-2">
-            <span className="text-[10px] font-semibold">Yesterday</span>
-            <span className="text-[10px] text-gray-600">User</span>
-          </div>
-        </div>     
-      </div>
-        <div className="w-full h-12 flex flex-row justify-between gap-1 mt-2 bg-white">
-        <div className="flex items-center ml-2">
-          <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex flex-col pl-2">
-              <span className="">Misbah Sehar</span>
-              <span className="text-xs text-gray-600">User</span>
-            </div>
-        </div>
-        <div className="flex items-right">
-          <div className="flex flex-col items-center p-2">
-            <span className="text-[10px] font-semibold">Yesterday</span>
-            <span className="text-[10px] text-gray-600">User</span>
-          </div>
-        </div>     
-      </div>
+         {/* a user chat */}
+        <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
 
-              <div className="w-full h-12 flex flex-row justify-between gap-1 mt-2 bg-white ">
-        <div className="flex items-center ml-2">
-          <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex flex-col pl-2">
-              <span className="">Misbah Sehar</span>
-              <span className="text-xs text-gray-600">User</span>
-            </div>
-        </div>
-        <div className="flex items-right">
-          <div className="flex flex-col items-center p-2">
-            <span className="text-[10px] font-semibold">Yesterday</span>
-            <span className="text-[10px] text-gray-600">User</span>
-          </div>
-        </div>     
-      </div>
+          {/* Left side */}
+          <div className="flex items-center gap-1 min-w-0">
+            <img
+              src="/defaultuser.JPG"
+              alt="avatar"
+              className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+            />
 
-              <div className="w-full h-12 flex flex-row justify-between gap-1 mt-2 bg-white ">
-        <div className="flex items-center ml-2">
-          <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex flex-col pl-2">
-              <span className="">Misbah Sehar</span>
-              <span className="text-xs text-gray-600">User</span>
+            <div className="flex flex-col min-w-0">
+              <p className=" truncate"> Misbah Sehar</p>
+              <span className="text-xs text-gray-600 truncate">
+                User
+              </span>
             </div>
-        </div>
-        <div className="flex items-right">
-          <div className="flex flex-col items-center p-2">
-            <span className="text-[10px] font-semibold">Yesterday</span>
-            <span className="text-[10px] text-gray-600">User</span>
           </div>
-        </div>     
-      </div>
 
-              <div className="w-full h-12 flex flex-row justify-between gap-1 mt-2 bg-white ">
-        <div className="flex items-center ml-2">
-          <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex flex-col pl-2">
-              <span className="">Misbah Sehar</span>
-              <span className="text-xs text-gray-600">User</span>
-            </div>
-        </div>
-        <div className="flex items-right">
-          <div className="flex flex-col items-center p-2">
-            <span className="text-[10px] font-semibold">Yesterday</span>
-            <span className="text-[10px] text-gray-600">User</span>
+          {/* Right side */}
+          <div className="flex flex-col items-center flex-shrink-0">
+            <span className="text-[10px] font-semibold whitespace-nowrap">
+              Yesterday
+            </span>
+            <span className="text-[10px] text-gray-600 whitespace-nowrap">
+              User
+            </span>
           </div>
-        </div>     
-      </div>
 
-              <div className="w-full h-12 flex flex-row justify-between gap-1 mt-2 bg-white ">
-        <div className="flex items-center ml-2">
-          <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
-            <div className="flex flex-col pl-2">
-              <span className="">Misbah Sehar</span>
-              <span className="text-xs text-gray-600">User</span>
-            </div>
         </div>
-        <div className="flex items-right">
-          <div className="flex flex-col items-center p-2">
-            <span className="text-[10px] font-semibold">Yesterday</span>
-            <span className="text-[10px] text-gray-600">User</span>
+
+{/* ----------------------------- */}
+        {/* a user chat */}
+        <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
+
+          {/* Left side */}
+          <div className="flex items-center gap-1 min-w-0">
+            <img
+              src="/defaultuser.JPG"
+              alt="avatar"
+              className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+            />
+
+            <div className="flex flex-col min-w-0">
+              <p className=" truncate"> Misbah Sehar</p>
+              <span className="text-xs text-gray-600 truncate">
+                User
+              </span>
+            </div>
           </div>
-        </div>     
-      </div>
+
+          {/* Right side */}
+          <div className="flex flex-col items-center flex-shrink-0">
+            <span className="text-[10px] font-semibold whitespace-nowrap">
+              Yesterday
+            </span>
+            <span className="text-[10px] text-gray-600 whitespace-nowrap">
+              User
+            </span>
+          </div>
+
+        </div>
+
+{/* ----------------------------- */}
+
+        {/* a user chat */}
+        <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
+
+          {/* Left side */}
+          <div className="flex items-center gap-1 min-w-0">
+            <img
+              src="/defaultuser.JPG"
+              alt="avatar"
+              className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+            />
+
+            <div className="flex flex-col min-w-0">
+              <p className=" truncate"> Misbah Sehar</p>
+              <span className="text-xs text-gray-600 truncate">
+                User
+              </span>
+            </div>
+          </div>
+
+          {/* Right side */}
+          <div className="flex flex-col items-center flex-shrink-0">
+            <span className="text-[10px] font-semibold whitespace-nowrap">
+              Yesterday
+            </span>
+            <span className="text-[10px] text-gray-600 whitespace-nowrap">
+              User
+            </span>
+          </div>
+
+        </div>
+
+{/* ----------------------------- */}
+
+        {/* a user chat */}
+        <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
+
+          {/* Left side */}
+          <div className="flex items-center gap-1 min-w-0">
+            <img
+              src="/defaultuser.JPG"
+              alt="avatar"
+              className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+            />
+
+            <div className="flex flex-col min-w-0">
+              <p className=" truncate"> Misbah Sehar</p>
+              <span className="text-xs text-gray-600 truncate">
+                User
+              </span>
+            </div>
+          </div>
+
+          {/* Right side */}
+          <div className="flex flex-col items-center flex-shrink-0">
+            <span className="text-[10px] font-semibold whitespace-nowrap">
+              Yesterday
+            </span>
+            <span className="text-[10px] text-gray-600 whitespace-nowrap">
+              User
+            </span>
+          </div>
+
+        </div>
+
+{/* ----------------------------- */}
+
 
       </div>
     </div>
 
-    <ChatArea />
+    {/* <div className="hidden md:block"> */}
+      <ChatArea />
+    {/* </div> */}
 
   </>
 
