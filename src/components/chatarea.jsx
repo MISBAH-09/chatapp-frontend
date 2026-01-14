@@ -1,100 +1,156 @@
 import React from 'react';
-import { FaEllipsisV, FaInfoCircle ,FaFilter, FaPhone, FaPlus, FaSearch, FaVideo } from "react-icons/fa";
+import {
+  FaEllipsisV,
+  FaInfoCircle,
+  FaPaperPlane,
+  FaMicrophone,
+  FaPaperclip,
+  FaPhone,
+  FaSearch,
+  FaVideo
+} from "react-icons/fa";
 
 function ChatArea() {
   return (
-   <>
-     <div className="hidden md:block md:w-1/2 lg:w-4/5 border-2 border-yellow-500 bg-gray-200 ">
-      {/* top header */}
-      <div className='w-full flex flex-row h-12 mb-1 bg-white'>
-          <div className="w-4/5 flex items-center gap-1 ml-2">
-            <img src="/defaultuser.JPG" alt="avatar" className="h-9 w-9 rounded-full object-cover" />
-            <div className="flex flex-col">
-              <span className="text-lg">Misbah Sehar</span>
-              <span className="text-xs text-gray-600 pb-2">Online</span>
+    <div className=" hidden md:flex flex-1 bg-gray-200 ">
+
+      {/* Chat Box */}
+      <div className="w-full flex flex-col bg-white">
+
+        {/* ===== Chat Header ===== */}
+        <div className="flex items-center h-14 border-b px-3 bg-white shrink-0">
+          <div className="flex items-center gap-2 flex-1">
+            <img
+              src="/defaultuser.JPG"
+              alt="avatar"
+              className="h-9 w-9 rounded-full"
+            />
+            <div>
+              <p className="text-sm font-semibold">Misbah Sehar</p>
+              <p className="text-xs text-gray-500">Online</p>
             </div>
           </div>
-        <div className='w-1/5 flex justify-end'>
-          <div className="ml-auto mr-2 gap-5 m-2 pr-4 flex ">
-              <button className="w-auto h-8"><FaSearch></FaSearch> </button>
-              <button className="w-auto h-8"><FaPhone> </FaPhone> </button>
-              <button className="w-auto h-8"><FaVideo> </FaVideo> </button>
-              <button className="w-auto h-8"><FaInfoCircle ></FaInfoCircle > </button>
+
+          <div className="flex gap-4 text-lg text-gray-700">
+            <FaSearch />
+            <FaPhone />
+            <FaVideo />
+            <FaInfoCircle />
+          </div>
+        </div>
+
+        {/* ===== Messages (Scrollable ONLY) ===== */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+
+          {/* My message */}
+          <div className="flex items-end gap-2">
+            <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
+            <div className="max-w-[60%]">
+              <p className="text-xs text-gray-500">Misbah • 2:00 PM</p>
+              <div className="bg-gray-200 p-2 rounded-xl text-sm">
+                Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, a.
+              </div>
             </div>
-        </div>
-      </div>
-      {/* chat part */}
-      <div className='h-full bg-white p-2'>
-        <h2>my messagess</h2>
+           <div className="flex items-center justify-center  mb-2">
+            <FaEllipsisV className="text-gray-400 text-sm" />
+           </div>
+          </div>
 
-        {/* if my message */}
-        <div className='m-1 flex flex-column gap-2  '>
-          <div className='mt-auto'>
-            <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover ml-2" />
-          </div>
-          <div className="w-2/5" >
-          <p className='text-[14px]'><span className='ml-1'>Misbah Sehar</span> <span className='ml-2'>2:00PM</span></p> 
-          <div className=" bg-gray-200 rounded-xl  text-wrap">
-            <p className='p-2'>srxtcygvuhbzrdxtfcy gvhbjzrxtcyvuhbez </p>
-          </div>
-          </div>
-          <div className='flex items-center'>
-            <button className="text-gray-400"><FaEllipsisV ></FaEllipsisV></button>
-          </div>
-        </div>
-         {/* if others message message */}
-        <div className='m-1 flex flex-column gap-2 justify-end '>
-          <div className='flex items-center'>
-            <button className="text-gray-400"><FaEllipsisV ></FaEllipsisV></button>
-          </div>
-           <div className="w-2/5" >
-          <p className='text-[14px]'><span className='ml-1'>Misbah Sehar</span> <span className='ml-2'>2:00PM</span></p> 
-          <div className=" bg-gray-200 rounded-xl  text-wrap">
-            <p className='p-2'>srxtcygvuhbzrdxtfcy gvhbjzrxtcyvuhbez </p>
-          </div>
-          </div>
-          <div className='mt-auto'>
-            <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover ml-2" />
-          </div>
-        </div>
-        <div className=' m-1 flex flex-column gap-2 justify-end  '>
-          <div className='flex items-center'>
-            <button className="text-gray-400"><FaEllipsisV ></FaEllipsisV></button>
-          </div>
-           <div className="w-2/5" >
-          <p className='text-[14px]'><span className='ml-1'>Misbah Sehar</span> <span className='ml-2'>2:00PM</span></p> 
-          <div className=" bg-gray-200 rounded-xl  text-wrap">
-            <p className='p-2'>srxtcygvuhbzrdxtfcy gvhbjzrxtcyvuhbez </p>
-          </div>
-          </div>
-          <div className='mt-auto'>
-            <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover ml-2" />
-          </div>
-        </div>
-
-
-        
-        {/* if my message */}
-        <div className='m-1 flex flex-column gap-2  '>
-          <div className='mt-auto'>
-            <img src="/defaultuser.JPG" alt="avatar" className="h-10 w-10 rounded-full object-cover ml-2" />
-          </div>
-          <div className="w-2/5" >
-          <p className='text-[14px]'><span className='ml-1'>Misbah Sehar</span> <span className='ml-2'>2:00PM</span></p> 
-          <div className=" bg-gray-200 rounded-xl  text-wrap">
-            <p className='p-2'>srxtcygvuhbzrdxtfcy gvhbjzrxtcyvuhbez </p>
-          </div>
-          </div>
           
-          <div className='flex items-center'>
-            <button className="text-gray-400"><FaEllipsisV ></FaEllipsisV></button>
+
+          {/* Other message */}
+          <div className="flex items-end gap-2 justify-end">
+            <div className="flex items-center justify-center  mb-2">
+            <FaEllipsisV className="text-gray-400 text-sm" />
+           </div>
+            <div className="max-w-[60%] text-right">
+              <p className="text-xs text-gray-500">Misbah • 2:01 PM</p>
+              <div className="bg-blue-100 p-2 text-left rounded-xl text-sm">
+                Lorem ipsum dolor sit amet consectetur adipisicing elit. 
+                Dolorum asperiores illo aliquam enim beatae id voluptates temporibus quam doloremque totam!
+              </div>
+            </div>
+            <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
+          </div>
+
+          {/* My message */}
+          <div className="flex items-end gap-2">
+            <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
+            <div className="max-w-[60%]">
+              <p className="text-xs text-gray-500">Misbah • 2:00 PM</p>
+              <div className="bg-gray-200 p-2 rounded-xl text-sm">
+                Hello this is my message
+              </div>
+            </div>
+            <div className="flex items-center justify-center  mb-2">
+            <FaEllipsisV className="text-gray-400 text-sm" />
+           </div>
+          </div>
+
+          {/* Other message */}
+          <div className="flex items-end gap-2 justify-end">
+            <div className="flex items-center justify-center  mb-2">
+            <FaEllipsisV className="text-gray-400 text-sm" />
+           </div>
+            <div className="max-w-[60%] text-right">
+              <p className="text-xs text-gray-500">Misbah • 2:01 PM</p>
+              <div className="bg-blue-100 p-2 text-left rounded-xl text-sm">
+                This stays in place
+              </div>
+            </div>
+            <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
+          </div>
+
+{/* My message */}
+          <div className="flex items-end gap-2">
+            <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
+            <div className="max-w-[60%]">
+              <p className="text-xs text-gray-500">Misbah • 2:00 PM</p>
+              <div className="bg-gray-200 p-2 rounded-xl text-sm">
+                Hello this is my message
+              </div>
+            </div>
+            <div className="flex items-center justify-center  mb-2">
+            <FaEllipsisV className="text-gray-400 text-sm" />
+           </div>
+          </div>
+
+          {/* Other message */}
+          <div className="flex items-end gap-2 justify-end">
+            <div className="flex items-center justify-center  mb-2">
+            <FaEllipsisV className="text-gray-400 text-sm" />
+           </div>
+            <div className="max-w-[60%] text-right">
+              <p className="text-xs text-gray-500">Misbah • 2:01 PM</p>
+              <div className="bg-blue-100 p-2 text-left rounded-xl text-sm">
+                Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                 Iusto ea porro reiciendis facilis nesciunt debitis, earum perspiciatis. 
+                Est sunt fugiat ipsum, esse cumque ducimus praesentium! Deleniti, dolorem. 
+                Aspernatur, culpa at.
+              </div>
+            </div>
+            <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
+          </div>
+
+
+        </div>
+
+        {/* ===== Message Input (STICKY INSIDE CHAT) ===== */}
+        <div className="border-t p-3 bg-white shrink-0">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Write message here"
+              className="flex-1 px-4 py-2 border rounded-full outline-none"
+            />
+            <FaPaperclip className="text-xl text-gray-600 cursor-pointer" />
+            <FaMicrophone className="text-xl text-gray-600 cursor-pointer" />
+            <FaPaperPlane className="text-xl text-blue-600 cursor-pointer" />
           </div>
         </div>
-        
+
       </div>
     </div>
-   
-   </>
   );
 }
 
