@@ -1,5 +1,5 @@
 import React from "react"; 
-import { FaBell, FaRegComment } from "react-icons/fa";
+import { FaBell, FaRegComment ,FaSearch} from "react-icons/fa";
 
 function Header() {
   return (
@@ -22,7 +22,7 @@ function Header() {
               placeholder="Search"
               className="w-full rounded bg-gray-100 text-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-400"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+              <FaSearch className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500' />
           </div>
         </div>
 

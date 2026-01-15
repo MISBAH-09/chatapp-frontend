@@ -1,17 +1,39 @@
-import React from "react";
+import React, { Profiler } from "react";
 import ChatArea from "./chatarea";
-import { FaEllipsisV, FaFilter, FaPlus } from "react-icons/fa";
+import { useState } from "react";
+import { FaEllipsisV, FaFilter, FaPlus,FaSearch } from "react-icons/fa";
 
 function Chatbar() {
+  const [showUpperScreen, setShowUpperScreen] = useState(false);
+
+  const allusers=[
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
+    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"}
+
+  ]
+
   return (
     <>
-      <div className="w-full md:w-1/2 lg:w-1/5 bg-gray-300 flex flex-col h-full">
+    {/* base div  */}
+    <div className=" flex border-2 border-pink-500 ">
+      
+      <div className="w-full md:w-1/2 lg:w-1/5 bg-gray-300 flex flex-col h-full ">
 
         {/* Chat tag */}
         <div className="w-full h-8 flex mt-2 shrink-0">
           <h3 className="font-bold ml-2">Chats</h3>
           <div className="ml-auto mr-2 gap-2 flex">
-            <button><FaPlus /></button>
+            <button onClick={() => setShowUpperScreen(true)}><FaPlus /></button>
             <button><FaEllipsisV /></button>
           </div>
         </div>
@@ -24,9 +46,7 @@ function Chatbar() {
               placeholder="Search"
               className="w-full bg-gray-100 text-black placeholder-gray-400 pl-3 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-400"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-              🔍
-            </span>
+             <FaSearch className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500' />
           </div>
         </div>
 
@@ -230,15 +250,62 @@ function Chatbar() {
 
           </div>
         </div>
-        {/* ================= SCROLLABLE AREA END ================= */}
       </div>
 
       {/* Chat Area (Hidden on Mobile) */}
       <div className="hidden md:flex flex-1">
         <ChatArea />
       </div>
+
+
+      {/* upper screen */}
+      {showUpperScreen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setShowUpperScreen(false)}
+          ></div>
+
+          <div className="relative w-[95%] sm:w-3/4 md:w-1/2 lg:w-3/5 bg-yellow-300 rounded-lg p-4 z-50 flex flex-col max-h-[90vh]">
+            <h3 className="text-left font-bold text-lg mb-2">New Message</h3>
+            <div className="w-full my-2 px-2 shrink-0">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="w-full bg-gray-100 text-black placeholder-gray-400 pl-3 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                />
+                <FaSearch className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500' />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto mt-2">
+              {allusers.map((user) => (
+                <div
+                  key={user.id}
+                  className="w-[99%] bg-gray-100 m-1 text-black flex items-center gap-1 min-w-0 pl-3 pr-4 py-2 rounded"
+                >
+                  <img
+                    src={user.profile ? user.profile : "/defaultuser.JPG"} 
+                    className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <p className="truncate">
+                      <span className="text-xs text-gray-600 truncate">{user.username} • </span>
+                      <span className="text-xs text-gray-600 truncate">{user.first_name} {user.last_name}</span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        </div>
+      )}
+    </div>
     </>
   );
 }
 
 export default Chatbar;
+
