@@ -4,13 +4,16 @@ import { useState, useEffect} from "react";
 import { FaEllipsisV, FaFilter, FaPlus,FaSearch } from "react-icons/fa";
 
 import { fetchAllUsers } from "../services/messageservices";
+import { currentUserId } from "../services/userService";
 
 
 function Chatbar() {
   const Backend_url = "http://localhost:8000/media/"
   const [showUpperScreen, setShowUpperScreen] = useState(false);
   const [allusers, setAllUsers] = useState([]); // ✅ array state
+  const [searchTerm, setSearchTerm] = useState(""); // <-- Add this
 
+  // const [conversation]
   useEffect(() => {
     const getUsers = async () => {
       try {
@@ -24,6 +27,20 @@ function Chatbar() {
 
     getUsers();
   }, []);
+
+  const handleConversation = (userId) => {
+      my_id = currentUserId();
+      user_id = userId
+      
+      // console.log("Selected user ID:", userId);
+      // console.log("my id",currentUserId())
+
+      // Here you can set the current conversation, e.g.
+      // setCurrentConversation(userId);
+
+      // Close the modal
+      setShowUpperScreen(false);
+    };
 
   return (
     <>
@@ -264,47 +281,60 @@ function Chatbar() {
       {/* upper screen */}
       {showUpperScreen && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
+          {/* Overlay */}
           <div
             className="absolute inset-0 bg-black/30"
             onClick={() => setShowUpperScreen(false)}
           ></div>
 
+          {/* Modal */}
           <div className="relative w-[95%] sm:w-3/4 md:w-1/2 lg:w-3/5 bg-yellow-300 rounded-lg p-4 z-50 flex flex-col max-h-[90vh]">
             <h3 className="text-left font-bold text-lg mb-2">New Message</h3>
+
+            {/* Search Input */}
             <div className="w-full my-2 px-2 shrink-0">
               <div className="relative">
                 <input
                   type="text"
                   placeholder="Search"
-                  className="w-full bg-gray-100 text-black placeholder-gray-400 pl-3 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full bg-gray-100 text-black placeholder-gray-400 pl-3 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <FaSearch className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500' />
+                <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
               </div>
             </div>
 
+            {/* User List */}
             <div className="flex-1 overflow-y-auto mt-2">
-              {allusers.map((user) => (
-                <div
-                  key={user.id}
-                  className="w-[99%] bg-gray-100 m-1 text-black flex items-center gap-1 min-w-0 pl-3 pr-4 py-2 rounded"
-                >
-                  <img
-                    src={user.profile ? `${Backend_url}${user.profile}` : "/defaultuser.JPG"} 
-                    className="h-8 w-8 rounded-full object-cover flex-shrink-0"
-                  />
-                  <div className="flex flex-col min-w-0">
-                    <p className="truncate">
-                      <span className="text-xs text-gray-600 truncate">{user.username} • </span>
-                      <span className="text-xs text-gray-600 truncate">{user.first_name} {user.last_name}</span>
-                    </p>
+              {allusers
+                .filter((user) =>
+                  `${user.username} ${user.first_name} ${user.last_name}`
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+                )
+                .map((user) => (
+                  <div
+                    key={user.id}
+                    onClick={() => handleConversation(user.id)}
+                    className="w-[99%] bg-gray-100 m-1 text-black flex items-center gap-2 min-w-0 pl-3 pr-4 py-2 rounded cursor-pointer hover:bg-gray-200"
+                  >
+                    <img
+                      src={user.profile ? `${Backend_url}${user.profile}` : "/defaultuser.JPG"}
+                      className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <p className="truncate text-xs text-gray-600">
+                        {user.username} • {user.first_name} {user.last_name}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
-
           </div>
         </div>
       )}
+
     </div>
     </>
   );

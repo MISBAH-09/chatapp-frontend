@@ -16,6 +16,7 @@ export const loginUser = async (username, email, password) => {
     }
 
     const token = result.data?.token;
+    const id = result.data?.id
     console.log("Token:", token);
 
     if (!token) {
@@ -23,6 +24,7 @@ export const loginUser = async (username, email, password) => {
     }
 
     localStorage.setItem("userToken", token);
+    localStorage.setItem("userId", id);
     return result;
 
   } catch (error) {
@@ -43,4 +45,9 @@ export const getToken = () => {
 
 export const logoutUser = () => {
   localStorage.removeItem('userToken');
+  localStorage.removeItem("userId");
+};
+
+export const currentUserId = () => {
+  return localStorage.getItem("userId"); 
 };

@@ -14,3 +14,7 @@ export const fetchAllUsers = async () => {
 
   return response.data;
 };
+
+export const getConversation = async ()=>{
+  
+}
