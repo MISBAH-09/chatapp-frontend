@@ -1,26 +1,29 @@
 import React, { Profiler } from "react";
 import ChatArea from "./chatarea";
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { FaEllipsisV, FaFilter, FaPlus,FaSearch } from "react-icons/fa";
 
+import { fetchAllUsers } from "../services/messageservices";
+
+
 function Chatbar() {
+  const Backend_url = "http://localhost:8000/media/"
   const [showUpperScreen, setShowUpperScreen] = useState(false);
+  const [allusers, setAllUsers] = useState([]); // ✅ array state
 
-  const allusers=[
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"},
-    { id : "id", username: "Misbahhhh", first_name:"Misbah" , last_name : "Sehar" , Profile : "path"}
+  useEffect(() => {
+    const getUsers = async () => {
+      try {
+        const response = await fetchAllUsers();
+        // assuming API returns { success, message, data }
+        setAllUsers(response.data); 
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
 
-  ]
+    getUsers();
+  }, []);
 
   return (
     <>
@@ -286,7 +289,7 @@ function Chatbar() {
                   className="w-[99%] bg-gray-100 m-1 text-black flex items-center gap-1 min-w-0 pl-3 pr-4 py-2 rounded"
                 >
                   <img
-                    src={user.profile ? user.profile : "/defaultuser.JPG"} 
+                    src={user.profile ? `${Backend_url}${user.profile}` : "/defaultuser.JPG"} 
                     className="h-8 w-8 rounded-full object-cover flex-shrink-0"
                   />
                   <div className="flex flex-col min-w-0">
