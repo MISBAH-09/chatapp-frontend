@@ -1,7 +1,24 @@
-import React from "react"; 
+import React ,{useState ,useEffect } from "react"; 
 import { FaBell, FaRegComment ,FaSearch} from "react-icons/fa";
+import { getCurrentUser } from "../services/userService";
 
 function Header() {
+  const [currentUser, setCurrentUser] = useState("")
+  const Backend_url = "http://localhost:8000/media/"
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const response = await getCurrentUser();
+        // console.log(response.data)
+        setCurrentUser(response.data); 
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    getUser();
+  });
+
+
   return (
     <header className="w-full bg-white text-black border-b border-gray-300 relative">
       <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
@@ -37,10 +54,12 @@ function Header() {
 
 
           <div className="flex items-center gap-3 ml-4">
-            <img src="/logo.png" alt="avatar" className="h-10 w-10 rounded-full object-cover border-2 border-black" />
+            <img src={currentUser.profile ? `${Backend_url}${currentUser.profile}` : "/defaultuser.JPG"}
+             alt="avatar" className="h-10 w-10 rounded-full object-cover border-2 border-black"
+            />
                 <div className="hidden sm:flex flex-col">
-                  <span className="text-lg font-semibold">MISBAH SEHAR</span>
-                  <span className="text-xs text-gray-600">User</span>
+                  <span className="text-lg font-semibold">{currentUser.first_name}  {currentUser.last_name}</span>
+                  <span className="text-xs text-gray-600">{currentUser.username}</span>
                 </div>
           </div>
         </div>

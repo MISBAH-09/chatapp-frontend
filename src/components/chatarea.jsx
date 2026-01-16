@@ -10,7 +10,8 @@ import {
   FaVideo
 } from "react-icons/fa";
 
-function ChatArea() {
+function ChatArea({conversation_id}) {
+  console.log(" chat area", conversation_id)
   return (
     <div className=" hidden md:flex flex-1 bg-gray-200 ">
 

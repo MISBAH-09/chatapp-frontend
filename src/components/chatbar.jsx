@@ -3,21 +3,22 @@ import ChatArea from "./chatarea";
 import { useState, useEffect} from "react";
 import { FaEllipsisV, FaFilter, FaPlus,FaSearch } from "react-icons/fa";
 
-import { fetchAllUsers , getConversation} from "../services/messageservices";
+import { fetchAllUsers , getConversation ,getAllConversation} from "../services/messageservices";
 
 
 function Chatbar() {
   const Backend_url = "http://localhost:8000/media/"
   const [showUpperScreen, setShowUpperScreen] = useState(false);
-  const [allusers, setAllUsers] = useState([]); // ✅ array state
-  const [searchTerm, setSearchTerm] = useState(""); // <-- Add this
+  const [allusers, setAllUsers] = useState([]); 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeconversationid, setActiveConversationId]= useState();
+  const [allconversations , setAllConversation] = useState([]);
 
   // const [conversation]
   useEffect(() => {
     const getUsers = async () => {
       try {
         const response = await fetchAllUsers();
-        // assuming API returns { success, message, data }
         setAllUsers(response.data); 
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -31,21 +32,26 @@ function Chatbar() {
     try {
       const response = await getConversation(userId);
       const conversation_id = response.data.conversation_id;
+      setActiveConversationId(conversation_id)
       setShowUpperScreen(false);
-
-      console.log("Conversation ID:", conversation_id);
-      console.log("Selected user ID:", userId);
-
       setShowUpperScreen(false);
     } catch (error) {
       console.error("Error getting conversation:", error);
     }
   };
 
-      
-      
-    //   setShowUpperScreen(false);
-    // };
+   useEffect(() => {
+    const getCoversations = async () => {
+      try {
+        const response = await getAllConversation();
+        console.log(response.data)
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    getCoversations();
+  }, []);
 
   return (
     <>
@@ -279,7 +285,7 @@ function Chatbar() {
 
       {/* Chat Area (Hidden on Mobile) */}
       <div className="hidden md:flex flex-1">
-        <ChatArea />
+        <ChatArea conversation_id ={activeconversationid} />
       </div>
 
 

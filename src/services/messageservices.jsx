@@ -14,3 +14,9 @@ export const getConversation = async (user_id) => {
 
   return response.data;
 };
+
+// get All conversations
+export const getAllConversation = async (user_id) => {
+  const response = await AxiosInstance.get("/getAllConversations/");
+  return response.data;
+};

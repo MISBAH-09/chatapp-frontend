@@ -1,4 +1,5 @@
 import axios from "axios";
+import AxiosInstance from "./axiosInstance";
 
 export const loginUser = async (username, email, password) => {
   const API_URL = "http://localhost:8000";
@@ -50,4 +51,11 @@ export const logoutUser = () => {
 
 export const currentUserId = () => {
   return localStorage.getItem("userId"); 
+};
+
+
+// get users
+export const getCurrentUser = async () => {
+  const response = await AxiosInstance.get("/get/");
+  return response.data;
 };
