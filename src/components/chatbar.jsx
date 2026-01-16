@@ -32,8 +32,9 @@ function Chatbar() {
     try {
       const response = await getConversation(userId);
       const conversation_id = response.data.conversation_id;
+      // console.log(response.data);
+      // const 
       setActiveConversationId(conversation_id)
-      setShowUpperScreen(false);
       setShowUpperScreen(false);
     } catch (error) {
       console.error("Error getting conversation:", error);
@@ -56,7 +57,7 @@ function Chatbar() {
   return (
     <>
     {/* base div  */}
-    <div className=" flex border-2 border-pink-500 ">
+    <div className=" flex ">
       
       <div className="w-full md:w-1/2 lg:w-1/5 bg-gray-300 flex flex-col h-full ">
 

@@ -5,11 +5,10 @@ import { getCurrentUser } from "../services/userService";
 function Header() {
   const [currentUser, setCurrentUser] = useState("")
   const Backend_url = "http://localhost:8000/media/"
-  useEffect(() => {
+  useState(() => {
     const getUser = async () => {
       try {
         const response = await getCurrentUser();
-        // console.log(response.data)
         setCurrentUser(response.data); 
       } catch (error) {
         console.error("Error fetching users:", error);

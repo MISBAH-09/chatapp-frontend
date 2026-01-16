@@ -1,10 +1,16 @@
 import axios from "axios";
-import AxiosInstance from "./axiosInstance";
+
+const API_BASE_URL = "http://localhost:8000";
+
+// Helper function to get authorization headers
+const getAuthHeaders = () => {
+  const accessToken = localStorage.getItem("userToken");
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+};
 
 export const loginUser = async (username, email, password) => {
-  const API_URL = "http://localhost:8000";
   try {
-    const response = await axios.post(`${API_URL}/login/`, {
+    const response = await axios.post(`${API_BASE_URL}/login/`, {
       username,
       email,
       password,
@@ -53,9 +59,10 @@ export const currentUserId = () => {
   return localStorage.getItem("userId"); 
 };
 
-
 // get users
 export const getCurrentUser = async () => {
-  const response = await AxiosInstance.get("/get/");
+  const response = await axios.get(`${API_BASE_URL}/get/`, {
+    headers: getAuthHeaders(),
+  });
   return response.data;
 };
