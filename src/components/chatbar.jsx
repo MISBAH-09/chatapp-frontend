@@ -3,8 +3,7 @@ import ChatArea from "./chatarea";
 import { useState, useEffect} from "react";
 import { FaEllipsisV, FaFilter, FaPlus,FaSearch } from "react-icons/fa";
 
-import { fetchAllUsers } from "../services/messageservices";
-import { currentUserId } from "../services/userService";
+import { fetchAllUsers , getConversation} from "../services/messageservices";
 
 
 function Chatbar() {
@@ -28,19 +27,25 @@ function Chatbar() {
     getUsers();
   }, []);
 
-  const handleConversation = (userId) => {
-      my_id = currentUserId();
-      user_id = userId
-      
-      // console.log("Selected user ID:", userId);
-      // console.log("my id",currentUserId())
-
-      // Here you can set the current conversation, e.g.
-      // setCurrentConversation(userId);
-
-      // Close the modal
+  const handleConversation = async (userId) => {
+    try {
+      const response = await getConversation(userId);
+      const conversation_id = response.data.conversation_id;
       setShowUpperScreen(false);
-    };
+
+      console.log("Conversation ID:", conversation_id);
+      console.log("Selected user ID:", userId);
+
+      setShowUpperScreen(false);
+    } catch (error) {
+      console.error("Error getting conversation:", error);
+    }
+  };
+
+      
+      
+    //   setShowUpperScreen(false);
+    // };
 
   return (
     <>
@@ -53,7 +58,7 @@ function Chatbar() {
         <div className="w-full h-8 flex mt-2 shrink-0">
           <h3 className="font-bold ml-2">Chats</h3>
           <div className="ml-auto mr-2 gap-2 flex">
-            <button onClick={() => setShowUpperScreen(true)}><FaPlus /></button>
+            <button className="transition-transform duration-200 hover:scale-110" onClick={() => setShowUpperScreen(true)}><FaPlus /></button>
             <button><FaEllipsisV /></button>
           </div>
         </div>

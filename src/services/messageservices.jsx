@@ -1,20 +1,16 @@
-import axios from "axios";
-import { getToken } from "./userService";
+import AxiosInstance from "./axiosInstance";
 
-// messageservices.jsx
+// fetch all users
 export const fetchAllUsers = async () => {
-  const token = getToken(); // This is "2b79ba72..."
+  const response = await AxiosInstance.get("/fetchallusers/");
+  return response.data;
+};
 
-  const response = await axios.get("http://localhost:8000/fetchallusers/", {
-    headers: {
-      // Remove "Bearer " prefix
-      Authorization: token 
-    },
+// get conversation
+export const getConversation = async (user_id) => {
+  const response = await AxiosInstance.post("/getConversation/", {
+    user_id,
   });
 
   return response.data;
 };
-
-export const getConversation = async ()=>{
-  
-}

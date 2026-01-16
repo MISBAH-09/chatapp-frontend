@@ -101,7 +101,7 @@ function ChatArea() {
             <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
           </div>
 
-{/* My message */}
+        {/* My message */}
           <div className="flex items-end gap-2">
             <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
             <div className="max-w-[60%]">
