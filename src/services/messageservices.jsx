@@ -52,8 +52,8 @@ export const sendMessage = async (payload) => {
 };
 
 export const getAllConversationMessages = async (conversation_id) =>{
-  const response = await axios.get(
-    `${API_BASE_URL}/sendMessage/`,
+  const response = await axios.post(
+    `${API_BASE_URL}/getConversationMessages/`,
     {
       conversation_id,
     },
@@ -62,5 +62,4 @@ export const getAllConversationMessages = async (conversation_id) =>{
     }
   );
   return response.data;
-
 }
