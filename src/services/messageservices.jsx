@@ -38,3 +38,29 @@ export const getAllConversation = async (user_id) => {
   });
   return response.data;
 };
+
+
+export const sendMessage = async (payload) => {
+  const response = await axios.post(
+    `${API_BASE_URL}/sendMessage/`,
+    payload,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+};
+
+export const getAllConversationMessages = async (conversation_id) =>{
+  const response = await axios.get(
+    `${API_BASE_URL}/sendMessage/`,
+    {
+      conversation_id,
+    },
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+
+}

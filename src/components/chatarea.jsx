@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState}from 'react';
 import {
   FaEllipsisV,
   FaInfoCircle,
@@ -9,9 +9,33 @@ import {
   FaSearch,
   FaVideo
 } from "react-icons/fa";
+import { sendMessage } from '../services/messageservices';
 
 
 function ChatArea({conversationid, activeconversation}) {
+
+const [messageText, setMessageText] = useState("");
+const sendmessage = async () => {
+  if (!messageText.trim()) return; // don't send empty messages
+
+  try {
+    const response = await sendMessage({
+      conversation_id: conversationid,
+      type: "text", // you can make this dynamic later if needed
+      body: messageText,
+      media_url: ""
+    });
+
+    console.log("Message sent:", response);
+    setMessageText(""); // clear input after sending
+  } catch (error) {
+    console.error("Error in sending message", error);
+  }
+};
+
+
+  
+
   const Backend_url = "http://localhost:8000/media/"
 
     if (!conversationid || !activeconversation) {
@@ -168,10 +192,15 @@ function ChatArea({conversationid, activeconversation}) {
                 type="text"
                 placeholder="Write message here"
                 className="flex-1 px-4 py-2 border rounded-full outline-none"
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
               />
               <FaPaperclip className="text-xl text-gray-600 cursor-pointer" />
               <FaMicrophone className="text-xl text-gray-600 cursor-pointer" />
-              <FaPaperPlane className="text-xl text-blue-600 cursor-pointer" />
+              <button onClick={()=>{sendmessage()}}>
+                <FaPaperPlane className="text-xl text-blue-600 cursor-pointer" />
+              </button>
+              
             </div>
           </div>
     </div>

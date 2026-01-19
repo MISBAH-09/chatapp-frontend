@@ -25,7 +25,6 @@ function Chatbar() {
         console.error("Error fetching users:", error);
       }
     };
-
     getUsers();
   }, []);
 
@@ -67,7 +66,7 @@ function Chatbar() {
     {/* base div  */}
     <div className="flex flex-1">
       
-      <div className="w-full md:w-1/3 lg:w-1/4 bg-gray-300 flex flex-col h-full md:shrink-0">
+      <div className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 bg-gray-300 flex flex-col h-full md:shrink-0">
 
         {/* Chat tag */}
         <div className="w-full h-8 flex mt-2 shrink-0">
