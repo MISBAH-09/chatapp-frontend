@@ -11,7 +11,8 @@ function Chatbar() {
   const [showUpperScreen, setShowUpperScreen] = useState(false);
   const [allusers, setAllUsers] = useState([]); 
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeconversationid, setActiveConversationId]= useState();
+   const [activeconversationid, setActiveConversationId]= useState('');
+  const [activeconversation, setActiveConversation]= useState(null);
   const [allconversations , setAllConversation] = useState([]);
 
   // const [conversation]
@@ -31,9 +32,15 @@ function Chatbar() {
   const handleConversation = async (userId) => {
     try {
       const response = await getConversation(userId);
+      setActiveConversation({
+        // title : response.data.title,
+        first_name: response.data.first_name,
+        last_name: response.data.last_name,
+        username :response.data.username,
+        userid : response.data.id,
+        profile: response.data.profile,
+      });
       const conversation_id = response.data.conversation_id;
-      // console.log(response.data);
-      // const 
       setActiveConversationId(conversation_id)
       setShowUpperScreen(false);
     } catch (error) {
@@ -41,25 +48,26 @@ function Chatbar() {
     }
   };
 
-   useEffect(() => {
+  useEffect(() => {
     const getCoversations = async () => {
       try {
         const response = await getAllConversation();
-        console.log(response.data)
+        setAllConversation(response.data); // adjust if needed
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching conversations:", error);
       }
     };
 
     getCoversations();
   }, []);
 
+
   return (
     <>
     {/* base div  */}
-    <div className=" flex ">
+    <div className="flex flex-1">
       
-      <div className="w-full md:w-1/2 lg:w-1/5 bg-gray-300 flex flex-col h-full ">
+      <div className="w-full md:w-1/3 lg:w-1/4 bg-gray-300 flex flex-col h-full md:shrink-0">
 
         {/* Chat tag */}
         <div className="w-full h-8 flex mt-2 shrink-0">
@@ -127,158 +135,48 @@ function Chatbar() {
 
           <div className="flex-1 overflow-y-auto p-2 min-h-0">
 
-            {/* ---------------- A CHAT BLOCKS ---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
+          {
+            allconversations.map((conversation) => (
+              <div
+                key={conversation.conversation_id}
+                className="w-full h-14 flex items-center border-2 border-green-500 justify-between mt-2 bg-white px-2 overflow-hidden cursor-pointer"
+                onClick={() => {
+                  setActiveConversationId(conversation.conversation_id);
+                  setActiveConversation({
+                    // title : response.data.title,
+                    first_name: conversation.first_name,
+                    last_name: conversation.last_name,
+                    username: conversation.username,
+                    userid: conversation.user_id,
+                    profile: conversation.profile,
+                  });
+                }}
+              >
+                <div className="flex items-center gap-1 min-w-0">
+                  <img
+                    src={
+                      conversation.profile
+                        ? `${Backend_url}${conversation.profile}`
+                        : "/defaultuser.JPG"
+                    }
+                    className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                  />
+
+                  <div className="flex flex-col min-w-0">
+                    <p className="truncate">
+                      {conversation.first_name} {conversation.last_name}
+                    </p>
+                    <span className="text-xs text-gray-600 truncate">User</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center flex-shrink-0">
+                  <span className="text-[10px] font-semibold">Yesterday</span>
+                  <span className="text-[10px] text-gray-600">User</span>
                 </div>
               </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-              {/* ---------------- A CHAT BLOCKS ---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-              {/* ---------------- A CHAT BLOCKS ---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-              {/* ---------------- A CHAT BLOCKS ---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-
-              {/* ---------------- A CHAT BLOCKS---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-
-              {/* ---------------- A CHAT BLOCKS ---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-              {/* ----------------A CHAT BLOCKS---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-
-              {/* ---------------- A CHAT BLOCKS---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-              {/* ----------------A CHAT BLOCKS ---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
-
-              {/* ---------------- A CHAT BLOCKS ---------------- */}
-            <div className="w-full h-14 flex items-center justify-between mt-2 bg-white px-2 overflow-hidden">
-              <div className="flex items-center gap-1 min-w-0">
-                <img src="/defaultuser.JPG" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <p className="truncate">Misbah Sehar</p>
-                  <span className="text-xs text-gray-600 truncate">User</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center flex-shrink-0">
-                <span className="text-[10px] font-semibold">Yesterday</span>
-                <span className="text-[10px] text-gray-600">User</span>
-              </div>
-            </div>
+            ))
+          }
 
           </div>
         </div>
@@ -286,7 +184,7 @@ function Chatbar() {
 
       {/* Chat Area (Hidden on Mobile) */}
       <div className="hidden md:flex flex-1">
-        <ChatArea conversation_id ={activeconversationid} />
+        <ChatArea conversationid ={activeconversationid} activeconversation= {activeconversation}/>
       </div>
 
 
