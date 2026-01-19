@@ -61,12 +61,13 @@ function Chatbar() {
   }, []);
 
 
-  return (
+   return (
     <>
     {/* base div  */}
     <div className="flex flex-1">
       
-      <div className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 bg-gray-300 flex flex-col h-full md:shrink-0">
+      {/* Chatbar - Hide on mobile when conversation is active */}
+      <div className={`${activeconversationid ? 'hidden' : 'flex'} md:flex w-full sm:w-1/2 md:w-1/3 lg:w-1/4 bg-gray-300 flex-col h-full md:shrink-0`}>
 
         {/* Chat tag */}
         <div className="w-full h-8 flex mt-2 shrink-0">
@@ -135,57 +136,74 @@ function Chatbar() {
           <div className="flex-1 overflow-y-auto p-2 min-h-0">
 
           {
-            allconversations.map((conversation) => (
-              <div
-                key={conversation.conversation_id}
-                className="w-full h-14 flex items-center border-2 border-green-500 justify-between mt-2 bg-white px-2 overflow-hidden cursor-pointer"
-                onClick={() => {
-                  setActiveConversationId(conversation.conversation_id);
-                  setActiveConversation({
-                    // title : response.data.title,
-                    first_name: conversation.first_name,
-                    last_name: conversation.last_name,
-                    username: conversation.username,
-                    userid: conversation.user_id,
-                    profile: conversation.profile,
-                  });
-                }}
-              >
-                <div className="flex items-center gap-1 min-w-0">
-                  <img
-                    src={
-                      conversation.profile
-                        ? `${Backend_url}${conversation.profile}`
-                        : "/defaultuser.JPG"
-                    }
-                    className="h-10 w-10 rounded-full object-cover flex-shrink-0"
-                  />
+            allconversations.map((conversation) => {
+              const isActive = conversation.conversation_id === activeconversationid; // check if active
 
-                  <div className="flex flex-col min-w-0">
-                    <p className="truncate">
-                      {conversation.first_name} {conversation.last_name}
-                    </p>
-                    <span className="text-xs text-gray-600 truncate">User</span>
+              return (
+                <div
+                  key={conversation.conversation_id}
+                  className={`w-full h-14 flex items-center justify-between mt-2 px-2 overflow-hidden cursor-pointer border-2 ${
+                    isActive ? 'bg-gray-300 border-black' : 'bg-white'
+                  }`}
+                  onClick={() => {
+                    setActiveConversationId(conversation.conversation_id);
+                    setActiveConversation({
+                      first_name: conversation.first_name,
+                      last_name: conversation.last_name,
+                      username: conversation.username,
+                      userid: conversation.user_id,
+                      profile: conversation.profile,
+                    });
+                  }}
+                >
+                  <div className="flex items-center gap-1 min-w-0">
+                    <img
+                      src={
+                        conversation.profile
+                          ? `${Backend_url}${conversation.profile}`
+                          : "/defaultuser.JPG"
+                      }
+                      className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <p className="truncate">
+                        {conversation.first_name} {conversation.last_name}
+                      </p>
+                      <span className="text-xs text-gray-600 truncate">User</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center flex-shrink-0">
+                    <span className="text-[10px] font-semibold">Yesterday</span>
+                    <span className="text-[10px] text-gray-600">User</span>
                   </div>
                 </div>
-
-                <div className="flex flex-col items-center flex-shrink-0">
-                  <span className="text-[10px] font-semibold">Yesterday</span>
-                  <span className="text-[10px] text-gray-600">User</span>
-                </div>
-              </div>
-            ))
+              );
+            })
           }
-
           </div>
         </div>
       </div>
 
-      {/* Chat Area (Hidden on Mobile) */}
-      <div className="hidden md:flex flex-1">
-        <ChatArea conversationid ={activeconversationid} activeconversation= {activeconversation}/>
-      </div>
 
+      {/* Chat Area - Show on mobile when conversation exists, always on desktop */}
+       {/* Chat Area - Show on mobile when conversation exists, always on desktop */}
+      {activeconversationid ? (
+        <div className="flex flex-1">
+          <ChatArea 
+            conversationid={activeconversationid} 
+            activeconversation={activeconversation}
+            onBack={() => {
+              setActiveConversationId('');
+              setActiveConversation(null);
+            }}
+          />
+        </div>
+      ) : (
+        <div className="flex-1 hidden md:flex">
+          <ChatArea conversationid={activeconversationid} activeconversation={activeconversation} />
+        </div>
+      )}
 
       {/* upper screen */}
       {showUpperScreen && (

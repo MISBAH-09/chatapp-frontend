@@ -7,11 +7,12 @@ import {
   FaPaperclip,
   FaPhone,
   FaSearch,
-  FaVideo
+  FaVideo,
+  FaArrowLeft
 } from "react-icons/fa";
 import { sendMessage, getAllConversationMessages } from '../services/messageservices';
 
-function ChatArea({ conversationid, activeconversation }) {
+function ChatArea({ conversationid, activeconversation, onBack }) {
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const conversation_id = conversationid;
@@ -22,19 +23,19 @@ function ChatArea({ conversationid, activeconversation }) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // ✅ Move getMessages outside useEffect so it can be reused
+  
   const getMessages = async () => {
     if (!conversation_id) return;
 
     try {
       const response = await getAllConversationMessages(conversation_id);
-      setMessages(response.data); // assuming response.data is array of messages
+      setMessages(response.data); 
     } catch (error) {
       console.error("Error fetching conversations:", error);
     }
   };
 
-  // Call getMessages once on component mount / conversation change
+  
   useEffect(() => {
     getMessages();
   }, [conversation_id]);
@@ -53,8 +54,6 @@ function ChatArea({ conversationid, activeconversation }) {
 
       console.log("Message sent:", response);
       setMessageText(""); 
-
-      // Refresh messages after successful send
       getMessages();
 
     } catch (error) {
@@ -66,7 +65,7 @@ function ChatArea({ conversationid, activeconversation }) {
 
     if (!conversationid || !activeconversation) {
       return (
-        <div className="hidden md:flex flex-1 bg-gray-200 h-full w-full">
+        <div className="flex flex-1 bg-gray-200 h-full w-full">
           <div className="w-full flex flex-col bg-white h-full items-center justify-center">
             <img src="/logo.png" className="h-40 w-40 rounded-full" />
             <p className="text-xl mt-4">Dreams Chat</p>
@@ -76,7 +75,6 @@ function ChatArea({ conversationid, activeconversation }) {
       );
     }
 
-  // console.log(" chat area",conversationid , activeconversation)
   const {
       // title,
       first_name,
@@ -87,11 +85,19 @@ function ChatArea({ conversationid, activeconversation }) {
     } = activeconversation;
 
   return (
-  <div className="hidden md:flex flex-1 bg-gray-200 h-full w-full">
+  <div className="flex flex-1 bg-gray-200 h-full w-full">
 
     <div className="w-full flex flex-col bg-white h-full ">
         {/* ===== Chat Header ===== */}
         <div className="flex items-center h-14 border-b px-3 bg-white shrink-0">
+          {/* Back button for mobile */}
+          <button 
+            onClick={onBack}
+            className="md:hidden mr-2 text-gray-600 hover:text-gray-900 text-xl"
+          >
+            <FaArrowLeft />
+          </button>
+
           <div className="flex items-center gap-2 flex-1">
             <img
               src={
@@ -134,10 +140,19 @@ function ChatArea({ conversationid, activeconversation }) {
                         {message.body} 
                       </div>
                     </div>
-                    <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
+                    <img src={
+                            message.sender_profile
+                              ? `${Backend_url}${message.sender_profile}`
+                              : "/defaultuser.JPG"
+                          } className="h-8 w-8 rounded-full" />
                   </div>
-                  :              <div className="flex items-end gap-2">
-                    <img src="/defaultuser.JPG" className="h-8 w-8 rounded-full" />
+                  :              
+                  <div className="flex items-end gap-2">
+                    <img src={
+                            message.sender_profile
+                              ? `${Backend_url}${message.sender_profile}`
+                              : "/defaultuser.JPG"
+                          } className="h-8 w-8 rounded-full" />
                     <div className="max-w-[60%]">
                       <p className="text-xs text-gray-500">{message.sender_first_name}   • {formatTime(message.created_at)}</p>
                       <div className="bg-gray-200 p-2 rounded-xl text-sm">
