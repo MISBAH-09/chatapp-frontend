@@ -1,15 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { FaEllipsisV, FaInfoCircle, FaPaperPlane, FaMicrophone, FaPaperclip, FaPhone, FaSearch, 
-  FaVideo, FaArrowLeft } from "react-icons/fa";
+import React, { useState, useEffect ,useRef , useLayoutEffect} from 'react';
+import {
+  FaEllipsisV,
+  FaInfoCircle,
+  FaPaperPlane,
+  FaMicrophone,
+  FaPaperclip,
+  FaPhone,
+  FaSearch,
+  FaVideo,
+  FaArrowLeft
+} from "react-icons/fa";
+
 import { sendMessage, getAllConversationMessages } from '../services/messageservices';
 
 function ChatArea({ conversationid, activeconversation, onBack }) {
+  const Backend_url = "http://localhost:8000/media/";
 
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioPreview, setAudioPreview] = useState(null);
+
+  const [isSending, setIsSending] = useState(false);
+  const messagesEndRef = useRef(null);
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -20,8 +40,52 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
     });
   };
 
-  const conversation_id = conversationid;
-  const Backend_url = "http://localhost:8000/media/";
+  const convertAudioBlobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      let chunks = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        setAudioBlob(blob);
+        setAudioPreview(URL.createObjectURL(blob));
+        chunks = [];
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Mic error:", err);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const cancelRecording = () => {
+    setAudioBlob(null);
+    setAudioPreview(null);
+    setIsRecording(false);
+  };
 
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
@@ -29,52 +93,72 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+
   const getMessages = async () => {
-    if (!conversation_id) return;
+    if (!conversationid) return;
 
     try {
-      const response = await getAllConversationMessages(conversation_id);
-      setMessages(response.data); 
+      const response = await getAllConversationMessages(conversationid);
+      setMessages(response.data);
     } catch (error) {
       console.error("Error fetching conversations:", error);
     }
   };
- 
-  useEffect(() => {
-    getMessages();
-  }, [conversation_id]);
 
-  // ===== SEND MESSAGE (TEXT OR IMAGE) =====
+ useEffect(() => {
+    getMessages();
+  }, [conversationid]);
+
+
   const sendmessage = async () => {
-    if (!messageText.trim() && !selectedImage) return;
+    if (isSending) return; 
+    if (!messageText.trim() && !selectedImage && !audioBlob) return;
+
+    setIsSending(true); 
 
     let base64 = "";
-
-    if (selectedImage) {
-      base64 = await convertToBase64(selectedImage);
-    }
-    // type = selectedImage ? "image" : "text",
-    console.log(" chattt" , base64 ,messageText)
-
-    const payload = {
-      conversation_id: conversationid,
-      type: selectedImage ? "image" : "text",
-      body: messageText,
-      media: base64,   // Base64 string
-    };
-    console.log("sdfvbjzxfcgvhbjzx",payload)
+    let messageType = "text";
 
     try {
+      if (selectedImage) {
+        base64 = await convertToBase64(selectedImage);
+        messageType = "image";
+      } else if (audioBlob) {
+        base64 = await convertAudioBlobToBase64(audioBlob);
+        messageType = "audio";
+      }
+
+      const payload = {
+        conversation_id: conversationid,
+        type: messageType,
+        body: messageText,
+        media: base64,
+      };
+
       const response = await sendMessage(payload);
       console.log("Message sent:", response);
 
-      setMessageText(""); 
+      setMessageText("");
       setSelectedImage(null);
       setImagePreview(null);
+      setAudioBlob(null);
+      setAudioPreview(null);
 
       getMessages();
     } catch (error) {
       console.error("Error in sending message", error);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -95,12 +179,9 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
     <div className="flex flex-1 bg-gray-200 h-full w-full">
       <div className="w-full flex flex-col bg-white h-full ">
 
-        {/* ===== Chat Header ===== */}
+        {/* HEADER */}
         <div className="flex items-center h-14 border-b px-3 bg-white shrink-0">
-          <button 
-            onClick={onBack}
-            className="md:hidden mr-2 text-gray-600 hover:text-gray-900 text-xl"
-          >
+          <button onClick={onBack} className="md:hidden mr-2 text-xl">
             <FaArrowLeft />
           </button>
 
@@ -111,7 +192,6 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
                   ? `${Backend_url}${activeconversation.profile}`
                   : "/defaultuser.JPG"
               }
-              alt="avatar"
               className="h-9 w-9 rounded-full"
             />
             <div>
@@ -132,32 +212,15 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
           </div>
         </div>
 
-        {/* ===== Messages ===== */}
+        {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {messages.map((message, index) => {
+          {messages.map((message) => {
             const isMine = message.sender_id === message.user_id;
 
             return (
-              <div key={index}>
-                {isMine ? (
-                  <div className="flex items-end gap-2 justify-end">
-                    <div className="max-w-[60%] text-right">
-                      <p className="text-xs text-gray-500">
-                        {message.sender_first_name} • {formatTime(message.created_at)}
-                      </p>
-
-                      <div className="bg-blue-100 p-2 text-left rounded-xl text-sm">
-                        {message.type === "image" ? (
-                          <img
-                            src={`${Backend_url}${message.media_url}`}
-                            className="rounded-lg max-w-xs"
-                          />
-                        ) : (
-                          message.body
-                        )}
-                      </div>
-                    </div>
-
+              <div key={message.id}>
+                <div className={`flex items-end gap-2 ${isMine ? "justify-end" : ""}`}>
+                  {!isMine && (
                     <img
                       src={
                         message.sender_profile
@@ -166,9 +229,27 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
                       }
                       className="h-8 w-8 rounded-full"
                     />
+                  )}
+
+                  <div className="max-w-[60%]">
+                    <p className={`text-xs text-gray-500 flex  ${isMine ? "justify-end" : ""}`}>
+                      {message.sender_first_name} • {formatTime(message.created_at)}
+                    </p>
+
+                    <div className={`p-2 rounded-xl text-sm ${isMine ? "bg-blue-100" : "bg-gray-200"}`}>
+                      {message.type === "image" && (
+                        <img src={`${Backend_url}${message.media_url}`} className="rounded-lg max-w-xs" />
+                      )}
+
+                      {message.type === "audio" && (
+                        <audio controls src={`${Backend_url}${message.media_url}`}></audio>
+                      )}
+
+                      {message.type === "text" && message.body}
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex items-end gap-2">
+
+                  {isMine && (
                     <img
                       src={
                         message.sender_profile
@@ -177,31 +258,16 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
                       }
                       className="h-8 w-8 rounded-full"
                     />
-
-                    <div className="max-w-[60%]">
-                      <p className="text-xs text-gray-500">
-                        {message.sender_first_name} • {formatTime(message.created_at)}
-                      </p>
-
-                      <div className="bg-gray-200 p-2 rounded-xl text-sm">
-                        {message.type === "image" ? (
-                          <img
-                            src={`${Backend_url}${message.media_url}`}
-                            className="rounded-lg max-w-xs"
-                          />
-                        ) : (
-                          message.body
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
+
             );
           })}
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* ===== Image Preview ===== */}
+        {/* IMAGE PREVIEW */}
         {imagePreview && (
           <div className="px-3 pb-2">
             <div className="relative w-32">
@@ -219,7 +285,29 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
           </div>
         )}
 
-        {/* ===== Message Input ===== */}
+        {/* AUDIO PREVIEW */}
+        {audioPreview && (
+          <div className="flex items-center gap-2 px-3 pb-2">
+            <audio controls src={audioPreview}></audio>
+
+            <button onClick={cancelRecording} className="bg-red-500 text-white px-2 rounded">
+              Cancel
+            </button>
+
+            <button
+              onClick={sendmessage}
+              disabled={isSending}
+              className={`px-2 rounded ${
+                isSending ? "bg-gray-400" : "bg-blue-500 text-white"
+              }`}
+            >
+              {isSending ? "Sending..." : "Send"}
+            </button>
+
+          </div>
+        )}
+
+        {/* INPUT */}
         <div className="border-t p-3 bg-white shrink-0">
           <div className="flex items-center gap-2">
 
@@ -237,27 +325,41 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
               }}
             />
 
-           <input
-            type="text"
-            placeholder="Write message here"
-            className="flex-1 px-4 py-2 border rounded-full outline-none"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onKeyUp={(e) => {
-              if (e.key === "Enter") {
-                sendmessage();
-              }
-            }}
-          />
+            <input
+              type="text"
+              placeholder="Write message here"
+              className="flex-1 px-4 py-2 border rounded-full outline-none"
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              onKeyUp={(e) => {
+                if (e.key === "Enter" && !isSending) sendmessage();
+              }}
+            />
 
-            <button onClick={() => document.getElementById("imageInput").click()}>
-              <FaPaperclip className="text-xl text-gray-600 cursor-pointer" />
+            <button title='Attach'
+              onClick={() => document.getElementById("imageInput").click()}
+            >
+              <FaPaperclip className="text-xl text-gray-600 transition-transform duration-200 hover:scale-150 hover:text-blue-700" />
             </button>
 
-            <FaMicrophone className="text-xl text-gray-600 cursor-pointer" />
+            {!isRecording && !audioPreview && (
+              <button onClick={startRecording} title='Voice Message'>
+                <FaMicrophone className="text-xl text-gray-600 transition-transform duration-200 hover:scale-150 hover:text-blue-700" />
+              </button>
+            )}
 
-            <button onClick={sendmessage}>
-              <FaPaperPlane className="text-xl text-blue-600 cursor-pointer" />
+            {isRecording && (
+              <button onClick={stopRecording} className="text-red-600">
+                ⏹
+              </button>
+            )}
+
+            <button onClick={sendmessage} disabled={isSending} >
+              <FaPaperPlane
+                className={`text-xl transition-transform duration-200 hover:scale-150 hover:text-blue-700 ${
+                  isSending ? "text-gray-400" : "text-blue-600"
+                }`}
+              />
             </button>
 
           </div>
