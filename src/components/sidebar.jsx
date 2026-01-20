@@ -13,18 +13,18 @@ function Sidebar() {
 
   return (
     <div
-      className={`h-screen bg-white border-r border-gray-200 transition-width duration-200 ease-in-out flex flex-col items-start ${
+      className={`h-screen bg-cyan-500 border-r border-gray-200 transition-width duration-200 ease-in-out flex flex-col items-start ${
         open ? "w-56" : "w-14"
       }`}
     >
       <div className="w-full flex flex-col items-start mt-2">
         <button
           onClick={() => setOpen((s) => !s)}
-          className="flex items-center gap-2 w-full px-2 py-2 hover:bg-gray-100"
+          className="flex items-center gap-2 w-full px-2 py-2 hover:bg-yellow-500"
           title="Toggle sidebar"
         >
           <FaBars className="ml-1 text-lg" />
-          {open && <span className="font-semibold">Menu</span>}
+          {open && <span className="font-semibold ">Menu</span>}
         </button>
 
         <div className="mt-4 w-full">
@@ -33,7 +33,7 @@ function Sidebar() {
             return (
               <button
                 key={it.key}
-                className="flex items-center gap-3 w-full px-2 py-2 hover:bg-gray-100"
+                className="flex items-center gap-3 w-full px-2 py-2 hover:bg-yellow-500"
                 title={it.title}
               >
                 <Icon className="ml-1 text-lg" />

@@ -8,7 +8,10 @@ import {
   FaPhone,
   FaSearch,
   FaVideo,
-  FaArrowLeft
+  FaArrowLeft,
+  FaStop,
+  FaTimes
+
 } from "react-icons/fa";
 
 import { sendMessage, getAllConversationMessages } from '../services/messageservices';
@@ -31,6 +34,8 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef(null);
 
+  const pollingRef = useRef(null);
+  
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -99,11 +104,6 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
     }
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-
   const getMessages = async () => {
     if (!conversationid) return;
 
@@ -111,13 +111,27 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
       const response = await getAllConversationMessages(conversationid);
       setMessages(response.data);
     } catch (error) {
-      console.error("Error fetching conversations:", error);
+      console.error("Error fetching messages:", error);
     }
   };
 
- useEffect(() => {
+  useEffect(() => {
+    if (!conversationid) return;
+
     getMessages();
+    const interval = setInterval(() => {
+      getMessages();
+    }, 2000);
+    return () => clearInterval(interval);
+
   }, [conversationid]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [messages]);
+
 
 
   const sendmessage = async () => {
@@ -170,22 +184,22 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
 
   if (!conversationid || !activeconversation) {
     return (
-      <div className="flex flex-1 bg-gray-200 h-full w-full">
-        <div className="w-full flex flex-col bg-white h-full items-center justify-center">
-          <img src="/logo.png" className="h-40 w-40 rounded-full" />
-          <p className="text-xl mt-4">Dreams Chat</p>
-          <p className="text-sm text-gray-500">Start Messaging</p>
+      <div className="flex flex-1 bg-gray-100 h-full w-full pl-1 ">
+        <div className="w-full flex flex-col  h-full items-center justify-center">
+          <img src="/logo.png" className="h-40 w-40 rounded-full  " />
+          <p className="text-[50px] font-serif">Dreams Chat</p>
+          <p className="text-xl  font-mono">Start Messaging</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-1 bg-gray-200 h-full w-full">
+    <div className="flex flex-1 pl-1 bg-gray-200 h-full w-full">
       <div className="w-full flex flex-col bg-white h-full ">
 
         {/* HEADER */}
-        <div className="flex items-center h-14 border-b px-3 bg-white shrink-0">
+        <div className="flex items-center h-14 border-b px-3 bg-cyan-500 shrink-0">
           <button onClick={onBack} className="md:hidden mr-2 text-xl">
             <FaArrowLeft />
           </button>
@@ -197,19 +211,19 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
                   ? `${Backend_url}${activeconversation.profile}`
                   : "/defaultuser.JPG"
               }
-              className="h-9 w-9 rounded-full"
+              className="h-12 w-12 rounded-full border-2 border-black"
             />
             <div>
-              <p className="text-sm font-semibold">
+              <p className="text-lg tracking-wide font-semibold">
                 {activeconversation.first_name} {activeconversation.last_name}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm ">
                 {activeconversation.username}
               </p>
             </div>
           </div>
 
-          <div className="flex gap-4 text-lg text-gray-700">
+          <div className="flex gap-4 text-lg ">
             <FaSearch />
             <FaPhone />
             <FaVideo />
@@ -218,7 +232,7 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
         </div>
 
         {/* MESSAGES */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        <div className="flex-1 overflow-y-auto bg-gray-100 p-3 space-y-3">
           {messages.map((message) => {
             const isMine = message.sender_id === message.user_id;
 
@@ -274,7 +288,7 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
 
         {/* IMAGE PREVIEW */}
         {imagePreview && (
-          <div className="px-3 pb-2">
+          <div className="px-3 pb-2 bg-gray-100">
             <div className="relative w-32">
               <img src={imagePreview} className="rounded-lg border" />
               <button
@@ -282,9 +296,9 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
                   setSelectedImage(null);
                   setImagePreview(null);
                 }}
-                className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 rounded"
+                className="absolute top-1 right-1 text-red-400 text-xs px-2 rounded"
               >
-                X
+                <FaTimes></FaTimes>
               </button>
             </div>
           </div>
@@ -292,28 +306,28 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
 
         {/* AUDIO PREVIEW */}
         {audioPreview && (
-          <div className="flex items-center gap-2 px-3 pb-2">
-            <audio controls src={audioPreview}></audio>
+          <div className="flex items-center gap-2 px-3 pb-2 bg-gray-100">
+            <audio controls src={audioPreview} className='border-2 border-black rounded-full'></audio>
 
-            <button onClick={cancelRecording} className="bg-red-500 text-white px-2 rounded">
-              Cancel
+            <button onClick={cancelRecording} className="text-red-500  text-2xl rounded">
+              <FaTimes></FaTimes>
             </button>
 
             <button
               onClick={sendmessage}
               disabled={isSending}
-              className={`px-2 rounded ${
-                isSending ? "bg-gray-400" : "bg-blue-500 text-white"
+              className={`px-2 rounded text-2xl ${
+                isSending ? "bg-gray-400" : "text-cyan-500"
               }`}
             >
-              {isSending ? "Sending..." : "Send"}
+              <FaPaperPlane></FaPaperPlane>
             </button>
 
           </div>
         )}
 
         {/* INPUT */}
-        <div className="border-t p-3 bg-white shrink-0">
+        <div className="border-t p-3 bg-cyan-500 shrink-0">
           <div className="flex items-center gap-2">
 
             <input
@@ -344,25 +358,25 @@ function ChatArea({ conversationid, activeconversation, onBack , onMessageSent})
             <button title='Attach'
               onClick={() => document.getElementById("imageInput").click()}
             >
-              <FaPaperclip className="text-xl text-gray-600 transition-transform duration-200 hover:scale-150 hover:text-blue-700" />
+              <FaPaperclip className="text-xl transition-transform duration-200 hover:scale-150 hover:text-black-500" />
             </button>
 
             {!isRecording && !audioPreview && (
               <button onClick={startRecording} title='Voice Message'>
-                <FaMicrophone className="text-xl text-gray-600 transition-transform duration-200 hover:scale-150 hover:text-blue-700" />
+                <FaMicrophone className="text-xl transition-transform duration-200 hover:scale-150 hover:text-black-500" />
               </button>
             )}
 
             {isRecording && (
               <button onClick={stopRecording} className="text-red-600">
-                ⏹
+                <FaStop className='text-lg transition-transform duration-200 hover:scale-120'></FaStop>
               </button>
             )}
 
             <button onClick={sendmessage} disabled={isSending} >
               <FaPaperPlane
-                className={`text-xl transition-transform duration-200 hover:scale-150 hover:text-blue-700 ${
-                  isSending ? "text-gray-400" : "text-blue-600"
+                className={`text-xl transition-transform duration-200 hover:scale-150 hover:text-black-500 ${
+                  isSending ? "text-gray-400" : "text-black-500"
                 }`}
               />
             </button>

@@ -19,12 +19,12 @@ function Header() {
 
 
   return (
-    <header className="w-full bg-white text-black border-b border-gray-300 relative">
+    <header className="w-full bg-cyan-500 text-black border-b border-gray-300 relative">
       <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
-        <img src="/logo.png" alt="logo" className="h-10 w-10 object-contain" />
+        <img src="/logo.png" alt="logo" className="h-10 w-10 object-contain rounded-full" />
         <div className="hidden sm:flex flex-col">
-          <span className="text-lg font-semibold">DreamsChat</span>
-          <span className="text-xs text-gray-600">Free Chat App</span>
+          <span className="text-lg  font-mono font-semibold">DreamsChat</span>
+          <span className="text-xs font-mono text-black">Free Chat App</span>
         </div>
       </div>
 
@@ -36,29 +36,29 @@ function Header() {
             <input
               type="text"
               placeholder="Search"
-              className="w-full rounded bg-gray-100 text-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              className="w-full rounded text-black border-2 border-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"
             />
-              <FaSearch className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500' />
+              <FaSearch className='absolute right-3 top-1/2 -translate-y-1/2 text-black' />
           </div>
         </div>
 
         {/* Right: Icons + User info pinned to right */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          <button aria-label="messages" className="relative p-1 rounded-md hover:text-cyan-400">
-            <FaRegComment className="text-xl text-yellow-400" />
+          <button aria-label="messages" className="relative p-1 rounded-md hover:text-black">
+            <FaRegComment className="text-xl text-black-400" />
           </button>
-          <button aria-label="notifications" className="relative p-1 rounded-md hover:text-cyan-400">
-            <FaBell className="text-xl text-yellow-400" />
+          <button aria-label="notifications" className="relative p-1 rounded-md hover:text-black">
+            <FaBell className="text-xl text-black-400" />
           </button>
 
 
-          <div className="flex items-center gap-3 ml-4">
+          <div className="flex items-center gap-3 ml-4 mr-10">
             <img src={currentUser.profile ? `${Backend_url}${currentUser.profile}` : "/defaultuser.JPG"}
-             alt="avatar" className="h-10 w-10 rounded-full object-cover border-2 border-black"
+             alt="avatar" className="h-12 w-12 border-2 border-black rounded-full object-cover border-2 border-black transition-transform duration-200 hover:scale-150"
             />
                 <div className="hidden sm:flex flex-col">
                   <span className="text-lg font-semibold">{currentUser.first_name}  {currentUser.last_name}</span>
-                  <span className="text-xs text-gray-600">{currentUser.username}</span>
+                  <span className="text-[18px]  text-gray-700 ">{currentUser.username}</span>
                 </div>
           </div>
         </div>

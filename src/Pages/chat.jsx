@@ -8,7 +8,7 @@ function Chat() {
     <div className="h-screen flex flex-col overflow-hidden">
       <Header />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden ">
         <Sidebar />
         <Chatbar />
       </div>
