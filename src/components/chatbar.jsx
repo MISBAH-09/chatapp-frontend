@@ -60,6 +60,18 @@ function Chatbar() {
     getCoversations();
   }, []);
 
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleDateString(); // default format based on locale
+  };
+
 
    return (
     <>
@@ -169,13 +181,13 @@ function Chatbar() {
                       <p className="truncate">
                         {conversation.first_name} {conversation.last_name}
                       </p>
-                      <span className="text-xs text-gray-600 truncate">User</span>
+                      <span className="text-xs text-gray-600 truncate">{conversation.latest_message_body}</span>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-center flex-shrink-0">
-                    <span className="text-[10px] font-semibold">Yesterday</span>
-                    <span className="text-[10px] text-gray-600">User</span>
+                    <span className="text-[10px] font-semibold">{formatDate(conversation.latest_message_time)}</span>
+                    <span className="text-[10px] text-gray-600">{formatTime(conversation.latest_message_time)}</span>
                   </div>
                 </div>
               );
@@ -185,8 +197,6 @@ function Chatbar() {
         </div>
       </div>
 
-
-      {/* Chat Area - Show on mobile when conversation exists, always on desktop */}
        {/* Chat Area - Show on mobile when conversation exists, always on desktop */}
       {activeconversationid ? (
         <div className="flex flex-1">
@@ -196,14 +206,36 @@ function Chatbar() {
             onBack={() => {
               setActiveConversationId('');
               setActiveConversation(null);
+              setShowUpperScreen(false);
+            }}
+            onMessageSent={async () => { 
+              try {
+                const response = await getAllConversation();
+                setAllConversation(response.data);
+              } catch (err) {
+                console.error("Error refreshing conversations:", err);
+              }
             }}
           />
         </div>
       ) : (
         <div className="flex-1 hidden md:flex">
-          <ChatArea conversationid={activeconversationid} activeconversation={activeconversation} />
+          <ChatArea 
+            conversationid={activeconversationid} 
+            activeconversation={activeconversation} 
+            onBack={() => setShowUpperScreen(false)}
+            onMessageSent={async () => {
+              try {
+                const response = await getAllConversation();
+                setAllConversation(response.data);
+              } catch (err) {
+                console.error("Error refreshing conversations:", err);
+              }
+            }}
+          />
         </div>
       )}
+
 
       {/* upper screen */}
       {showUpperScreen && (

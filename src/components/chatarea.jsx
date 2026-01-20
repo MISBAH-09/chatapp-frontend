@@ -13,7 +13,7 @@ import {
 
 import { sendMessage, getAllConversationMessages } from '../services/messageservices';
 
-function ChatArea({ conversationid, activeconversation, onBack }) {
+function ChatArea({ conversationid, activeconversation, onBack , onMessageSent}) {
   const Backend_url = "http://localhost:8000/media/";
 
   const [messageText, setMessageText] = useState("");
@@ -154,7 +154,12 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
       setAudioBlob(null);
       setAudioPreview(null);
 
-      getMessages();
+      // getMessages();
+      await getMessages();
+
+      // Notify Chatbar to refresh conversations
+      if (onMessageSent) onMessageSent();
+
     } catch (error) {
       console.error("Error in sending message", error);
     } finally {
