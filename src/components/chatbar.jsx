@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import ChatArea from "./chatarea";
 import { FaEllipsisV, FaFilter, FaPlus, FaSearch } from "react-icons/fa";
 import { fetchAllUsers, getConversation, getAllConversation } from "../services/messageservices";
+import { formatTime ,formatDate} from "./helpermethods";
 
 function Chatbar() {
   const Backend_url = "http://localhost:8000/media/";
@@ -58,17 +59,7 @@ function Chatbar() {
     }
   };
 
-  const formatTime = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    return date.toLocaleDateString();
-  };
+ 
 
   // Filter conversations based on search term
   const filteredConversations = allconversations

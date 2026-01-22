@@ -51,6 +51,38 @@ export const getAllConversation = async (user_id) => {
 //   return response.data;
 // };
 
+//delete message 
+export const delMessage = async (message_id) => {
+  const response = await axios.post(
+    `${API_BASE_URL}/delete_message/`,
+    {
+      message_id,
+    },
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+
+  return response.data;
+};
+
+//delete message 
+export const updMessage = async (message_id,message_body) => {
+  const response = await axios.put(
+    `${API_BASE_URL}/update-message/`,
+    {
+      message_id,
+      message_body,
+    },
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+
+  return response.data;
+};
+
+
 export const getAllConversationMessages = async (conversation_id) =>{
   const response = await axios.post(
     `${API_BASE_URL}/getConversationMessages/`,

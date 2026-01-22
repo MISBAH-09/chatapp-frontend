@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   FaEllipsisV, FaInfoCircle, FaPaperPlane, FaMicrophone,
   FaPaperclip, FaPhone, FaSearch, FaVideo, FaArrowLeft,
-  FaStop, FaTimes
+  FaStop, FaTimes ,FaCheck
 } from "react-icons/fa";
-
-import { getAllConversationMessages } from "../services/messageservices";
+import { convertToBase64 ,convertAudioBlobToBase64 , formatTime } from "./helpermethods";
+import { getAllConversationMessages ,delMessage ,updMessage } from "../services/messageservices";
 
 function ChatArea({ conversationid, activeconversation, onBack, onMessageSent }) {
   const Backend_url = "http://localhost:8000/media/";
@@ -23,28 +23,17 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
   const [audioPreview, setAudioPreview] = useState(null);
 
   const [isSending, setIsSending] = useState(false);
+  const [menuOpenId, setMenuOpenId] = useState(null);
+
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [originalMessageText, setOriginalMessageText] = useState(""); // to restore if cancel
+
 
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
+  const menuRef = useRef(null);
 
   // ---------------- HELPERS ----------------
-  const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (err) => reject(err);
-    });
-  };
-
-  const convertAudioBlobToBase64 = (blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (err) => reject(err);
-    });
-  };
 
   const startRecording = async () => {
     try {
@@ -69,15 +58,7 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
   const stopRecording = () => { mediaRecorder?.stop(); setIsRecording(false); };
   const cancelRecording = () => { setAudioBlob(null); setAudioPreview(null); setIsRecording(false); };
 
-  const formatTime = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  };
+  const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); };
 
   // ---------------- INITIAL LOAD ----------------
   const getMessages = async () => {
@@ -91,8 +72,18 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
   };
 
   useEffect(() => { if(conversationid) getMessages(); }, [conversationid]);
-
   useEffect(() => { scrollToBottom(); }, [messages]);
+
+  // Click outside to close menu
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   // ---------------- WEBSOCKET ----------------
   useEffect(() => {
@@ -104,19 +95,14 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
     wsRef.current = new WebSocket(wsUrl);
 
     wsRef.current.onopen = () => console.log("WebSocket connected");
-
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-
-      // Add new message with proper sender info
       setMessages((prev) => [...prev, {
         ...data,
-        user_id: parseInt(localStorage.getItem("userId")) // Logged-in user id
+        user_id: parseInt(localStorage.getItem("userId"))
       }]);
-
       if(onMessageSent) onMessageSent();
     };
-
     wsRef.current.onerror = (err) => console.error("WebSocket error", err);
     wsRef.current.onclose = () => console.log("WebSocket disconnected");
 
@@ -133,7 +119,6 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
     try {
       let base64 = "";
       let messageType = "text";
-
       if(selectedImage) {
         base64 = await convertToBase64(selectedImage);
         messageType = "image";
@@ -141,24 +126,56 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
         base64 = await convertAudioBlobToBase64(audioBlob);
         messageType = "audio";
       }
-
-      wsRef.current.send(JSON.stringify({
-        type: messageType,
-        body: messageText,
-        media: base64,
-      }));
-
-      // Reset input
-      setMessageText("");
-      setSelectedImage(null);
-      setImagePreview(null);
-      setAudioBlob(null);
-      setAudioPreview(null);
-
-    } finally {
-      setIsSending(false);
-    }
+      wsRef.current.send(JSON.stringify({ type: messageType, body: messageText, media: base64 }));
+      setMessageText(""); setSelectedImage(null); setImagePreview(null);
+      setAudioBlob(null); setAudioPreview(null);
+    } finally { setIsSending(false); }
   };
+
+  const handleDelete = async (message_id) => {
+    try {
+      await delMessage(message_id);
+      setMenuOpenId(null);
+    } catch (err) { console.error("Delete failed", err); }
+  };
+
+  const handleUpdate = (message_id ,message_body) => {
+    setEditingMessageId(message_id);       // which message is being edited
+    setMessageText(message_body);          // fill input bar with current message
+    setOriginalMessageText(message_body);  // backup original text
+    setMenuOpenId(null);                   // close menu
+  };
+
+
+  const confirmUpdate = async () => {
+  if (!editingMessageId || !messageText.trim()) return;
+
+  try {
+    setIsSending(true);
+    console.log("id ", editingMessageId)
+    console.log("wertyuert",messageText)
+    // Call your backend API to update message
+    await updMessage(editingMessageId, messageText); 
+
+    // Optimistically update message locally
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === editingMessageId ? { ...msg, body: messageText } : msg
+      )
+    );
+
+    // Reset input
+    setMessageText("");
+    setEditingMessageId(null);
+    setOriginalMessageText("");
+  } catch (err) {
+    console.error("Update failed", err);
+  } finally {
+    setIsSending(false);
+  }
+};
+
+
 
   if(!conversationid || !activeconversation) {
     return (
@@ -180,20 +197,13 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
         <div className="flex items-center h-14 border-b px-3 bg-cyan-500 shrink-0">
           <button onClick={onBack} className="md:hidden mr-2 text-xl"><FaArrowLeft /></button>
           <div className="flex items-center gap-2 flex-1">
-            <img
-              src={activeconversation.profile ? `${Backend_url}${activeconversation.profile}` : "/defaultuser.JPG"}
-              className="h-12 w-12 rounded-full border-2 border-black"
-            />
+            <img src={activeconversation.profile ? `${Backend_url}${activeconversation.profile}` : "/defaultuser.JPG"} className="h-12 w-12 rounded-full border-2 border-black" />
             <div>
-              <p className="text-lg tracking-wide font-semibold">
-                {activeconversation.first_name} {activeconversation.last_name}
-              </p>
+              <p className="text-lg tracking-wide font-semibold">{activeconversation.first_name} {activeconversation.last_name}</p>
               <p className="text-sm">{activeconversation.username}</p>
             </div>
           </div>
-          <div className="flex gap-4 text-lg">
-            <FaSearch /><FaPhone /><FaVideo /><FaInfoCircle />
-          </div>
+          <div className="flex gap-4 text-lg"><FaSearch /><FaPhone /><FaVideo /><FaInfoCircle /></div>
         </div>
 
         {/* MESSAGES */}
@@ -203,58 +213,79 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
             const isMine = message.sender_id === loggedUserId;
 
             return (
-              <div key={message.id}>
-                <div className={`flex items-end gap-2 ${isMine ? "justify-end" : ""}`}>
-                  {!isMine && (
-                    <img
-                      src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"}
-                      className="h-8 w-8 rounded-full"
-                    />
-                  )}
+              <div key={message.id} className={`flex items-end gap-2 ${isMine ? "justify-end" : ""}`}>
 
-                  <div className="max-w-[60%]">
-                    <p className={`text-xs text-gray-500 flex ${isMine ? "justify-end" : ""}`}>
-                      {message.sender_first_name} • {formatTime(message.created_at)}
-                    </p>
+                {!isMine && (
+                  <img src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"} className="h-8 w-8 rounded-full" />
+                )}
 
-                    <div className={`p-2 rounded-xl text-sm ${isMine ? "bg-blue-100" : "bg-gray-200"}`}>
-                      {message.type === "image" && (
-                        <img src={`${Backend_url}${message.media_url}`} className="rounded-lg max-w-xs" />
-                      )}
-                      {message.type === "audio" && (
-                        <audio controls src={`${Backend_url}${message.media_url}`}></audio>
-                      )}
-                      {message.type === "text" && message.body}
-                    </div>
+                <div className="relative max-w-[60%] group">
+
+                  <p className={`text-xs text-gray-500 flex ${isMine ? "justify-end" : ""}`}>
+                    {message.sender_first_name} • {formatTime(message.created_at)}
+                    {
+                    message.created_at!== message.updated_at && (
+                      <span className="text-xs text-gray-500 ml-2">Edited</span>
+                    )}
+                  </p>
+                 
+                  <div className={`relative p-2 rounded-xl text-sm ${isMine ? "bg-blue-100" : "bg-gray-200"}`}>
+                    {message.status === "delete" ? (
+                      <span className="italic text-gray-500">This message was deleted by {message.sender_first_name}</span>
+                    ) : (
+                      <>
+                        {message.type === "image" && (
+                          <img
+                            src={`${Backend_url}${message.media_url}`}
+                            className="rounded-lg max-w-[200px] max-h-[200px] object-cover"
+                            alt="sent image"
+                          />
+                        )}
+
+                        {message.type === "audio" && <audio controls src={`${Backend_url}${message.media_url}`} />}
+                        {message.type === "text" && message.body}
+                      </>
+                    )}
+
+                    {message.status !== "delete" && isMine &&(
+                      <button
+                        ref={menuRef}
+                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === message.id ? null : message.id); }}
+                        className={`absolute top-1/2 -translate-y-1/2 ${isMine ? "-left-6" : "-right-6"}`}
+                      >
+                        <FaEllipsisV />
+                      </button>
+                    )}
+
+                    {menuOpenId === message.id && (
+                      <div onClick={(e) => e.stopPropagation()} className={`absolute top-1 mt-2 z-50 ${isMine ? "-left-28" : "-right-28"} bg-white shadow-lg rounded-md text-sm w-24`}>
+                        <button className="block w-full text-left px-3 py-2 hover:bg-gray-100" onClick={() => handleUpdate(message.id , message.body)}>Update</button>
+                        <button className="block w-full text-left px-3 py-2 hover:bg-gray-100 text-red-500" onClick={() => handleDelete(message.id)}>Delete</button>
+                      </div>
+                    )}
                   </div>
-
-                  {isMine && (
-                    <img
-                      src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"}
-                      className="h-8 w-8 rounded-full"
-                    />
-                  )}
+                  
                 </div>
+
+                {isMine && (
+                  <img src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"} className="h-8 w-8 rounded-full" />
+                )}
               </div>
             );
           })}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* IMAGE PREVIEW */}
+        {/* IMAGE & AUDIO PREVIEW */}
         {imagePreview && (
           <div className="px-3 pb-2 bg-gray-100">
             <div className="relative w-32">
               <img src={imagePreview} className="rounded-lg border" />
-              <button
-                onClick={() => { setSelectedImage(null); setImagePreview(null); }}
-                className="absolute top-1 right-1 text-red-400 text-xs px-2 rounded"
-              ><FaTimes /></button>
+              <button onClick={() => { setSelectedImage(null); setImagePreview(null); }} className="absolute top-1 right-1 text-red-400 text-xs px-2 rounded"><FaTimes /></button>
             </div>
           </div>
         )}
 
-        {/* AUDIO PREVIEW */}
         {audioPreview && (
           <div className="flex items-center gap-2 px-3 pb-2 bg-gray-100">
             <audio controls src={audioPreview} className='border-2 border-black rounded-full'></audio>
@@ -266,6 +297,7 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
         {/* INPUT */}
         <div className="border-t p-3 bg-cyan-500 shrink-0">
           <div className="flex items-center gap-2">
+            {/* Attach button (always visible) */}
             <input
               type="file"
               accept="image/*"
@@ -276,20 +308,69 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
                 if(file) { setSelectedImage(file); setImagePreview(URL.createObjectURL(file)); }
               }}
             />
+            <button title='Attach' onClick={() => document.getElementById("imageInput").click()}>
+              <FaPaperclip className="text-xl" />
+            </button>
+
+            {/* Text input */}
             <input
               type="text"
               placeholder="Write message here"
               className="flex-1 px-4 py-2 border rounded-full outline-none"
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
-              onKeyUp={(e) => { if(e.key==="Enter" && !isSending) sendmessage(); }}
+              onKeyUp={(e) => {
+                if(e.key === "Enter" && !isSending){
+                  if(editingMessageId){
+                    confirmUpdate();
+                  } else {
+                    sendmessage();
+                  }
+                }
+              }}
             />
-            <button title='Attach' onClick={() => document.getElementById("imageInput").click()}><FaPaperclip className="text-xl" /></button>
-            {!isRecording && !audioPreview && (<button onClick={startRecording} title='Voice Message'><FaMicrophone className="text-xl" /></button>)}
-            {isRecording && (<button onClick={stopRecording} className="text-red-600"><FaStop className='text-lg'></FaStop></button>)}
-            <button onClick={sendmessage} disabled={isSending}><FaPaperPlane className={`text-xl ${isSending ? "text-gray-400" : "text-black-500"}`} /></button>
+
+            {/* Microphone (hide if recording or editing) */}
+            {!isRecording && !audioPreview && !editingMessageId && (
+              <button onClick={startRecording} title='Voice Message'>
+                <FaMicrophone className="text-xl" />
+              </button>
+            )}
+            {isRecording && (
+              <button onClick={stopRecording} className="text-red-600">
+                <FaStop className='text-lg' />
+              </button>
+            )}
+
+            {/* Send / Update button */}
+            <button
+              onClick={editingMessageId ? confirmUpdate : sendmessage}
+              disabled={isSending}
+            >
+              {editingMessageId ? <FaCheck className="text-xl text-green-600" /> : <FaPaperPlane className="text-xl" />}
+            </button>
+
+            {/* Cancel editing */}
+            {editingMessageId && (
+              <button
+                onClick={() => {
+                  setMessageText("");           // empty input
+                  setEditingMessageId(null);    // exit edit mode
+                  setOriginalMessageText("");   // clear backup
+                  setSelectedImage(null);       // optional: clear attached image
+                  setImagePreview(null);        // optional: clear preview
+                }}
+                className="text-red-500 ml-2"
+              >
+                <FaTimes />
+              </button>
+            )}
+
+
           </div>
         </div>
+
+
       </div>
     </div>
   );
