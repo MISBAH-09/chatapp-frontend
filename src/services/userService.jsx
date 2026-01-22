@@ -64,5 +64,18 @@ export const getCurrentUser = async () => {
   const response = await axios.get(`${API_BASE_URL}/get/`, {
     headers: getAuthHeaders(),
   });
-  return response.data;
+  return response.data.data;
+};
+
+// update user
+
+export const updateUser = async (payload) => {
+  const response = await axios.put(`${API_BASE_URL}/update/`,
+     payload, 
+    { 
+      headers: getAuthHeaders() 
+    });
+  if (!response.data.success)
+    throw new Error(response.data.message || "Failed to update");
+  return response.data.data;
 };
