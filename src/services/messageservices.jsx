@@ -66,7 +66,7 @@ export const delMessage = async (message_id) => {
   return response.data;
 };
 
-//delete message 
+//update message 
 export const updMessage = async (message_id,message_body) => {
   const response = await axios.put(
     `${API_BASE_URL}/update-message/`,

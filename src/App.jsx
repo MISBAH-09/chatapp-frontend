@@ -1,25 +1,41 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import Login from './Pages/login'
-import Chat from './pages/chat'
-import { getToken } from './services/userService'
+import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "./Pages/login";
+import Chat from "./Pages/chat";
+import InviteUser from "./Pages/inviteuser";
+import { getToken } from "./services/userService";
+
+const PrivateRoute = ({ children }) => {
+  const isToken = !!getToken();
+  return isToken ? children : <Navigate to="/login" />;
+};
 
 function App() {
-  const isToken = !!getToken(); // convert to true/false
-
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
 
       <Route
-        path="/"
+        path="/chat"
         element={
-          isToken ? <Chat /> : <Navigate to="/login" />
+          <PrivateRoute>
+            <Chat />
+          </PrivateRoute>
         }
       />
 
-      <Route path="*" element={<Navigate to="/login" />} />
+      <Route
+        path="/inviteuser"
+        element={
+          <PrivateRoute>
+            <InviteUser />
+          </PrivateRoute>
+        }
+      />
+
+      <Route path="/" element={<Navigate to="/chat" />} />
+      <Route path="*" element={<Navigate to="/chat" />} />
     </Routes>
-  )
+  );
 }
 
 export default App;
