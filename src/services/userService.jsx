@@ -68,7 +68,6 @@ export const getCurrentUser = async () => {
 };
 
 // update user
-
 export const updateUser = async (payload) => {
   const response = await axios.put(`${API_BASE_URL}/update/`,
      payload, 
@@ -79,3 +78,21 @@ export const updateUser = async (payload) => {
     throw new Error(response.data.message || "Failed to update");
   return response.data.data;
 };
+
+// add user by email
+export const addUser = async (email) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/addbyemail/`, 
+      { email },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;  
+  } catch (error) {
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);  
+    }
+    throw error;  
+  }
+};
+
+
