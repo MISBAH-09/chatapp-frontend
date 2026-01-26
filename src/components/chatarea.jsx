@@ -199,8 +199,8 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
           <div className="flex items-center gap-2 flex-1">
             <img src={activeconversation.profile ? `${Backend_url}${activeconversation.profile}` : "/defaultuser.JPG"} className="h-12 w-12 rounded-full border-2 border-black" />
             <div>
-              <p className="text-lg tracking-wide font-semibold">{activeconversation.first_name} {activeconversation.last_name}</p>
-              <p className="text-sm">{activeconversation.username}</p>
+              <p className="text-lg tracking-wide font-semibold">{activeconversation.first_name ? activeconversation.first_name : "User"} {activeconversation.last_name}</p>
+              <p className="text-sm">{activeconversation.username ? activeconversation.username :activeconversation.email}</p>
             </div>
           </div>
           <div className="flex gap-4 text-lg"><FaSearch /><FaPhone /><FaVideo /><FaInfoCircle /></div>
@@ -222,7 +222,7 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
                 <div className="relative max-w-[60%] group">
 
                   <p className={`text-xs text-gray-500 flex ${isMine ? "justify-end" : ""}`}>
-                    {message.sender_first_name} • {formatTime(message.created_at)}
+                    {message.sender_first_name ? message.sender_first_name : "User"} • {formatTime(message.created_at)}
                     {
                     message.created_at!== message.updated_at && (
                       <span className="text-xs text-gray-500 ml-2">Edited</span>

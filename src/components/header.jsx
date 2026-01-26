@@ -76,7 +76,7 @@ function Header() {
 
   return (
     <>
-    <header className="w-full bg-cyan-500 text-black border-b border-gray-300 relative">
+    <header className="w-full bg-cyan-500 text-black border-b-2 border-black relative">
       <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
         <img src="/logo.png" alt="logo" className="h-10 w-10 object-contain rounded-full" />
         <div className="hidden sm:flex flex-col">
@@ -114,8 +114,8 @@ function Header() {
              alt="avatar" className="h-12 w-12 border-2 border-black rounded-full object-cover border-2 border-black transition-transform duration-200 hover:scale-150"
             />
                 <div className="hidden sm:flex flex-col">
-                  <span className="text-lg font-semibold">{currentUser.first_name}  {currentUser.last_name}</span>
-                  <span className="text-[18px]  text-gray-700 ">{currentUser.username}</span>
+                  <span className="text-lg font-semibold">{currentUser.first_name ? currentUser.first_name : "User"}  {currentUser.last_name}</span>
+                  <span className="text-[18px]  text-gray-700 ">{currentUser.username ? currentUser.username : currentUser.email}</span>
                 </div>
           </div>
         </div>

@@ -50,6 +50,7 @@ function Chatbar() {
         username: response.data.username,
         userid: response.data.id,
         profile: response.data.profile,
+        email : response.data.email,
       });
       const conversation_id = response.data.conversation_id;
       setActiveConversationId(conversation_id);
@@ -126,7 +127,7 @@ function Chatbar() {
                     className="h-12 w-12 rounded-full object-cover transition-transform duration-200 hover:scale-150 border-2 border-black "
                   />
                   <span className="text-xs truncate">
-                    {conversation.username}
+                    {conversation.username ? conversation.username :"User"}
                   </span>
                 </div>
               ))}
@@ -159,6 +160,7 @@ function Chatbar() {
                       username: conversation.username,
                       userid: conversation.user_id,
                       profile: conversation.profile,
+                      email : conversation.email
                     });
                   }}
                 >
@@ -168,7 +170,7 @@ function Chatbar() {
                       className="h-10 w-10 rounded-full object-cover flex-shrink-0 transition-transform duration-200 hover:scale-150 border-2 border-cyan-500"
                     />
                     <div className="flex flex-col min-w-0">
-                      <p className="truncate font-serif">{conversation.first_name} {conversation.last_name}</p>
+                      <p className="truncate font-serif">{conversation.first_name? conversation.first_name : conversation.email} {conversation.last_name}</p>
                       <span className="text-xs text-gray-600 truncate">{conversation.latest_message_body}</span>
                     </div>
                   </div>
@@ -257,7 +259,7 @@ function Chatbar() {
             <div className="flex-1 overflow-y-auto mt-2">
               {allusers
                 .filter((user) =>
-                  `${user.username} ${user.first_name} ${user.last_name}`
+                  `${user.username} ${user.email}${user.first_name} ${user.last_name}`
                     .toLowerCase()
                     .includes(searchTerm.toLowerCase())
                 )
@@ -273,7 +275,7 @@ function Chatbar() {
                     />
                     <div className="flex flex-col min-w-0">
                       <p className="truncate ">
-                        {user.username} • {user.first_name} {user.last_name}
+                        {user.username ? user.username : user.email} • {user.first_name} {user.last_name}
                       </p>
                     </div>
                   </div>

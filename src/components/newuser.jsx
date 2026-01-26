@@ -69,7 +69,7 @@ const handlenewUser = async () => {
   return (
     <div className="w-full flex flex-col md:flex-row h-full">
       {/* ===== ALL USERS ===== */}
-      <div className="w-full md:w-1/2 flex">
+      <div className="w-full md:w-1/2 flex border-r-4 border-black">
         <div className="flex-1 overflow-y-auto pt-1 bg-cyan-500">
           <div className="flex flex-row items-center ml-2 pt-2 mb-2">
             <FaUserFriends className="text-3xl mr-4" />
@@ -100,7 +100,7 @@ const handlenewUser = async () => {
 
       {/* ===== INVITE USER ===== */}
       <div className="w-full md:w-1/2 flex mt-4 md:mt-0">
-        <div className="w-full flex flex-col ml-0 md:ml-1 bg-cyan-500">
+        <div className="w-full flex flex-col bg-cyan-500">
           <div className="flex flex-row items-center ml-2 pt-2 mb-2">
             <FaUserPlus className="text-3xl mr-4" />
             <h2 className="font-semibold text-2xl md:text-3xl font-serif tracking-wider">
