@@ -131,7 +131,8 @@ These endpoints are consumed by the frontend to handle user authentication and p
 | `POST` | `/login/`         | User login and token generation               | ❌ No          |
 | `GET`  | `/get/`           | Fetching logged-in user profile               | ✅ Yes         |
 | `PUT`  | `/update/`        | Updating user profile details                 | ✅ Yes         |
-| `GET`  | `/fetchallusers/` | Listing all users (excluding current user)    | ✅ Yes         |
+| `GET`  | `/fetchallusers/` | Listing all users (excluding current user)    | ✅ Yes  
+| `GET`  | `/getbyid/`       | Gettong the logged in user for the header data| ✅ Yes         |
 | `POST` | `/addbyemail/`    | Inviting a new user via email                 | ❌ No          |
 
 📌 **Frontend Files Involved**
