@@ -1,40 +1,117 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useSocket } from "../contexts/SocketContext";
+import { toast } from "react-toastify";
+
 import {
   FaEllipsisV, FaInfoCircle, FaPaperPlane, FaMicrophone,
   FaPaperclip, FaPhone, FaSearch, FaVideo, FaArrowLeft,
   FaStop, FaTimes ,FaCheck
 } from "react-icons/fa";
-import { convertToBase64 ,convertAudioBlobToBase64 , formatTime } from "./helpermethods";
-import { getAllConversationMessages ,delMessage ,updMessage } from "../services/messageservices";
 
-function ChatArea({ conversationid, activeconversation, onBack, onMessageSent }) {
+import { convertToBase64, convertAudioBlobToBase64, formatTime, formatDate } from "./helpermethods";
+import { getAllConversationMessages } from "../services/messageservices";
+
+function ChatArea({ conversationid, activeconversation, onBack }) {
   const Backend_url = "http://localhost:8000/media/";
 
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
-
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
-
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioPreview, setAudioPreview] = useState(null);
-
   const [isSending, setIsSending] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
-
   const [editingMessageId, setEditingMessageId] = useState(null);
-  const [originalMessageText, setOriginalMessageText] = useState(""); // to restore if cancel
-
+  const [originalMessageText, setOriginalMessageText] = useState("");
 
   const messagesEndRef = useRef(null);
-  const wsRef = useRef(null);
   const menuRef = useRef(null);
 
-  // ---------------- HELPERS ----------------
+  const { wsRef, sendMessage, connected } = useSocket();
 
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+
+  const getMessages = async () => {
+    if (!conversationid) return;
+    try {
+      const response = await getAllConversationMessages(conversationid);
+      setMessages(response.data);
+    } catch(err) {
+      console.error("Error fetching messages:", err);
+    }
+  };
+
+  useEffect(() => { if(conversationid) getMessages(); }, [conversationid]);
+  useEffect(() => { scrollToBottom(); }, [messages]);
+
+  // ---------------- Listen global messages ----------------
+  useEffect(() => {
+    if (!wsRef.current) return;
+
+    const handleGlobalMessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.conversation_id === conversationid) {
+        setMessages(prev => {
+          if (prev.some(msg => msg.id === data.id)) return prev; // prevent duplicates
+          return [...prev, data];
+        });
+      }
+    };
+
+    wsRef.current.addEventListener("message", handleGlobalMessage);
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.removeEventListener("message", handleGlobalMessage);
+      }
+    };
+  }, [conversationid, wsRef]);
+
+  // ---------------- Send message ----------------
+  const sendmessage = async () => {
+    if (isSending) return;
+    if (!connected) {
+      toast("Socket not connected yet!");
+      return;
+    }
+    if (!messageText.trim() && !selectedImage && !audioBlob) return;
+
+    setIsSending(true);
+    try {
+      let base64 = "";
+      let messageType = "text";
+
+      if (selectedImage) {
+        base64 = await convertToBase64(selectedImage);
+        messageType = "image";
+      } else if (audioBlob) {
+        base64 = await convertAudioBlobToBase64(audioBlob);
+        messageType = "audio";
+      }
+
+      sendMessage({
+        type: "chat_message",      // ✅ must match backend
+        conversation_id: conversationid,
+        body: messageText,
+        msg_type: messageType,      // ✅ text / image / audio
+        media: base64
+      });
+
+      setMessageText("");
+      setSelectedImage(null);
+      setImagePreview(null);
+      setAudioBlob(null);
+      setAudioPreview(null);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // ------------------ Helpers ------------------
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -54,27 +131,14 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
       console.error("Mic error:", err);
     }
   };
-
   const stopRecording = () => { mediaRecorder?.stop(); setIsRecording(false); };
   const cancelRecording = () => { setAudioBlob(null); setAudioPreview(null); setIsRecording(false); };
 
-  const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); };
+  // useEffect(() => { if(conversationid) getMessages(); }, [conversationid]);
+  // useEffect(() => { scrollToBottom(); }, [messages]);
 
-  // ---------------- INITIAL LOAD ----------------
-  const getMessages = async () => {
-    if (!conversationid) return;
-    try {
-      const response = await getAllConversationMessages(conversationid);
-      setMessages(response.data);
-    } catch(err) {
-      console.error("Error fetching messages:", err);
-    }
-  };
-
-  useEffect(() => { if(conversationid) getMessages(); }, [conversationid]);
-  useEffect(() => { scrollToBottom(); }, [messages]);
-
-  // Click outside to close menu
+  
+  // ------------------ Click outside menu ------------------
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -84,53 +148,6 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
-
-  // ---------------- WEBSOCKET ----------------
-  useEffect(() => {
-    if(!conversationid) return;
-    const token = localStorage.getItem("userToken");
-    if(!token) return;
-
-    const wsUrl = `ws://localhost:8000/ws/chat/${conversationid}/?token=${token}`;
-    wsRef.current = new WebSocket(wsUrl);
-
-    wsRef.current.onopen = () => console.log("WebSocket connected");
-    wsRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setMessages((prev) => [...prev, {
-        ...data,
-        user_id: parseInt(localStorage.getItem("userId"))
-      }]);
-      if(onMessageSent) onMessageSent();
-    };
-    wsRef.current.onerror = (err) => console.error("WebSocket error", err);
-    wsRef.current.onclose = () => console.log("WebSocket disconnected");
-
-    return () => wsRef.current?.close();
-  }, [conversationid]);
-
-  // ---------------- SEND MESSAGE ----------------
-  const sendmessage = async () => {
-    if(isSending) return;
-    if(!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    if(!messageText.trim() && !selectedImage && !audioBlob) return;
-
-    setIsSending(true);
-    try {
-      let base64 = "";
-      let messageType = "text";
-      if(selectedImage) {
-        base64 = await convertToBase64(selectedImage);
-        messageType = "image";
-      } else if(audioBlob) {
-        base64 = await convertAudioBlobToBase64(audioBlob);
-        messageType = "audio";
-      }
-      wsRef.current.send(JSON.stringify({ type: messageType, body: messageText, media: base64 }));
-      setMessageText(""); setSelectedImage(null); setImagePreview(null);
-      setAudioBlob(null); setAudioPreview(null);
-    } finally { setIsSending(false); }
-  };
 
   const handleDelete = async (message_id) => {
     try {
@@ -175,8 +192,6 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
   }
 };
 
-
-
   if(!conversationid || !activeconversation) {
     return (
       <div className="flex flex-1 bg-gray-100 h-full w-full pl-1 ">
@@ -192,7 +207,7 @@ function ChatArea({ conversationid, activeconversation, onBack, onMessageSent })
   return (
     <div className="flex flex-1 pl-1 bg-gray-200 h-full w-full">
       <div className="w-full flex flex-col bg-white h-full">
-
+        {/* <ToastContainer /> */}
         {/* HEADER */}
         <div className="flex items-center h-14 border-b px-3 bg-cyan-500 shrink-0">
           <button onClick={onBack} className="md:hidden mr-2 text-xl"><FaArrowLeft /></button>
