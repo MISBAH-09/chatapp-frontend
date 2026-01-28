@@ -4,7 +4,7 @@ import { FaEllipsisV, FaFilter, FaPlus, FaSearch } from "react-icons/fa";
 import { fetchAllUsers, getConversation, getAllConversation } from "../services/messageservices";
 import { formatTime ,formatDate} from "./helpermethods";
 
-function Chatbar() {
+function Chatbar({ activeConversationFromNotification, setActiveConversationFromNotification }) {
   const Backend_url = "http://localhost:8000/media/";
 
   const [showUpperScreen, setShowUpperScreen] = useState(false);
@@ -15,6 +15,18 @@ function Chatbar() {
   const [allconversations, setAllConversation] = useState([]);
   const pollingRef = useRef(null);
 
+ useEffect(() => {
+    if (activeConversationFromNotification) {
+      const conversation = allconversations.find(
+      (c) => c.conversation_id === activeConversationFromNotification
+    );
+    if (conversation) {
+      setActiveConversationId(conversation.conversation_id);
+      setActiveConversation(conversation);
+      setActiveConversationFromNotification(null);
+    }
+    }
+  }, [activeConversationFromNotification, allconversations]);
   // Polling function
   const pollingFunc = async () => {
     try {
@@ -61,6 +73,7 @@ function Chatbar() {
   };
 
  
+// get conversation id from the notification 
 
   // Filter conversations based on search term
   const filteredConversations = allconversations
