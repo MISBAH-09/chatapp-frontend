@@ -10,7 +10,7 @@ const getAuthHeaders = () => {
 
 // fetch all users
 export const fetchAllUsers = async () => {
-  const response = await axios.get(`${API_BASE_URL}/fetchallusers/`, {
+  const response = await axios.get(`${API_BASE_URL}/fetchAllUsers/`, {
     headers: getAuthHeaders(),
   });
   return response.data;
@@ -54,7 +54,7 @@ export const getAllConversation = async (user_id) => {
 //delete message 
 export const delMessage = async (message_id) => {
   const response = await axios.post(
-    `${API_BASE_URL}/delete_message/`,
+    `${API_BASE_URL}/deleteMessage/`,
     {
       message_id,
     },
@@ -69,7 +69,7 @@ export const delMessage = async (message_id) => {
 //update message 
 export const updMessage = async (message_id,message_body) => {
   const response = await axios.put(
-    `${API_BASE_URL}/update-message/`,
+    `${API_BASE_URL}/updateMessage/`,
     {
       message_id,
       message_body,
