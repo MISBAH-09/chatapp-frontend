@@ -14,6 +14,9 @@ import { getAllConversationMessages , updMessage ,delMessage} from "../services/
 function ChatArea({ conversationid, activeconversation, onBack }) {
   const Backend_url = "http://localhost:8000/media/";
 
+  const [showSearchbar, setshowSearchbar] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -29,6 +32,7 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
 
   const messagesEndRef = useRef(null);
   const menuRef = useRef(null);
+  const searchRef = useRef(null);
 
   const { wsRef, sendMessage, connected } = useSocket();
 
@@ -46,6 +50,22 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
 
   useEffect(() => { if(conversationid) getMessages(); }, [conversationid]);
   useEffect(() => { scrollToBottom(); }, [messages]);
+
+  // helper function for hightlight 
+  const highlightText = (text, term) => {
+    if (!term) return text;
+
+    const regex = new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, "gi");
+    const parts = text.split(regex);
+
+    return parts.map((part, i) =>
+      regex.test(part) ? (
+        <mark key={i} className="bg-yellow-300">{part}</mark>
+      ) : (
+        part
+      )
+    );
+  };
 
   // ---------------- Listen global messages ----------------
   useEffect(() => {
@@ -134,20 +154,25 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
   const stopRecording = () => { mediaRecorder?.stop(); setIsRecording(false); };
   const cancelRecording = () => { setAudioBlob(null); setAudioPreview(null); setIsRecording(false); };
 
-  // useEffect(() => { if(conversationid) getMessages(); }, [conversationid]);
-  // useEffect(() => { scrollToBottom(); }, [messages]);
-
-  
   // ------------------ Click outside menu ------------------
   useEffect(() => {
     const handleClickOutside = (e) => {
+      // Close menu if clicked outside
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpenId(null);
       }
+
+      // Close search bar if clicked outside
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setshowSearchbar(false);
+      }
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+
+    document.addEventListener("mousedown", handleClickOutside); // use mousedown for both
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+
 
   const handleDelete = async (message_id) => {
     try {
@@ -207,9 +232,9 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
   return (
     <div className="flex flex-1 pl-1 bg-gray-200 h-full w-full">
       <div className="w-full flex flex-col bg-white h-full">
-        {/* <ToastContainer /> */}
+
         {/* HEADER */}
-        <div className="flex items-center h-14 border-b px-3 bg-cyan-500 shrink-0">
+        <div className="flex items-center h-14 border-b px-3 bg-cyan-500 shrink-0 relative">
           <button onClick={onBack} className="md:hidden mr-2 text-xl"><FaArrowLeft /></button>
           <div className="flex items-center gap-2 flex-1">
             <img src={activeconversation.profile ? `${Backend_url}${activeconversation.profile}` : "/defaultuser.JPG"} className="h-12 w-12 rounded-full border-2 border-black" />
@@ -218,9 +243,38 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
               <p className="text-sm">{activeconversation.username ? activeconversation.username :activeconversation.email}</p>
             </div>
           </div>
-          <div className="flex gap-4 text-lg"><FaSearch /><FaPhone /><FaVideo /><FaInfoCircle /></div>
-        </div>
 
+          {/* Search bar overlay */}
+          {showSearchbar && (
+        <div
+          ref={searchRef}
+          onClick={(e) => e.stopPropagation()} 
+          className="absolute top-full right-0 w-full max-w-md mx-auto z-50 p-2 rounded shadow-lg flex items-center"
+        >
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded text-black border-2 border-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-black" />
+        </div>
+          )}
+
+          <div className="flex gap-4 text-lg">
+            <FaSearch
+          onClick={(e) => {
+            e.stopPropagation(); 
+            setshowSearchbar(prev => !prev);
+          }}
+          className="cursor-pointer"
+        />
+            <FaPhone />
+            <FaVideo />
+            <FaInfoCircle />
+          </div>
+        </div>
         {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto bg-gray-100 p-3 space-y-3">
           {messages.map((message) => {
@@ -258,14 +312,21 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
                         )}
 
                         {message.type === "audio" && <audio controls src={`${Backend_url}${message.media_url}`} />}
-                        {message.type === "text" && message.body}
+                        {message.type === "text" && (
+                          <span>
+                            {highlightText(message.body, searchTerm)}
+                          </span>
+                        )}
                       </>
                     )}
 
                     {message.status !== "delete" && isMine &&(
                       <button
                         ref={menuRef}
-                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === message.id ? null : message.id); }}
+                        onMouseDown={(e) => {
+                        e.stopPropagation(); // prevent document mousedown from firing
+                        setMenuOpenId(menuOpenId === message.id ? null : message.id);
+                        }}
                         className={`absolute top-1/2 -translate-y-1/2 ${isMine ? "-left-6" : "-right-6"}`}
                       >
                         <FaEllipsisV />
@@ -369,19 +430,17 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
             {editingMessageId && (
               <button
                 onClick={() => {
-                  setMessageText("");           // empty input
-                  setEditingMessageId(null);    // exit edit mode
-                  setOriginalMessageText("");   // clear backup
-                  setSelectedImage(null);       // optional: clear attached image
-                  setImagePreview(null);        // optional: clear preview
+                  setMessageText("");           
+                  setEditingMessageId(null);    
+                  setOriginalMessageText("");   
+                  setSelectedImage(null);       
+                  setImagePreview(null);        
                 }}
                 className="text-red-500 ml-2"
               >
                 <FaTimes />
               </button>
             )}
-
-
           </div>
         </div>
 
