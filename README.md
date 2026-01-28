@@ -131,7 +131,7 @@ These endpoints are consumed by the frontend to handle user authentication and p
 | `POST` | `/login/`         | User login and token generation               | ❌ No          |
 | `GET`  | `/get/`           | Fetching logged-in user profile               | ✅ Yes         |
 | `PUT`  | `/update/`        | Updating user profile details                 | ✅ Yes         |
-| `GET`  | `/fetchallusers/` | Listing all users (excluding current user)    | ✅ Yes  
+| `GET`  | `/fetchAllUsers/` | Listing all users (excluding current user)    | ✅ Yes  
 | `GET`  | `/getbyid/`       | Gettong the logged in user for the header data| ✅ Yes         |
 | `POST` | `/addbyemail/`    | Inviting a new user via email                 | ❌ No          |
 
@@ -154,8 +154,8 @@ These APIs power the chat UI, conversation list, and message operations.
 | `GET`  | `/getAllConversations/`     | Displaying conversation list in sidebar      | ✅ Yes         |
 | `POST` | `/sendMessage/`             | Sending messages (text/media)                | ✅ Yes         |
 | `POST` | `/getConversationMessages/` | Loading messages for selected conversation   | ✅ Yes         |
-| `POST` | `/delete_message/`          | Deleting a sent message                      | ✅ Yes         |
-| `PUT`  | `/update-message/`          | Editing a previously sent text message       | ✅ Yes         |
+| `POST` | `/deleteMessage/`          | Deleting a sent message                      | ✅ Yes         |
+| `PUT`  | `/updateMessage/`          | Editing a previously sent text message       | ✅ Yes         |
 
 📌 **Frontend Files Involved**
 
