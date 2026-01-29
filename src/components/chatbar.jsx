@@ -13,7 +13,79 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
   const [activeconversationid, setActiveConversationId] = useState('');
   const [activeconversation, setActiveConversation] = useState(null);
   const [allconversations, setAllConversation] = useState([]);
-  const pollingRef = useRef(null);
+
+  const [modalType, setModalType] = useState("message"); // default is New Message
+  const [groupName, setGroupName] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState([]);
+    const pollingRef = useRef(null);
+
+
+
+ const toggleUserSelection = (userId) => {
+  setSelectedUsers((prev) =>
+    prev.includes(userId)
+      ? prev.filter((id) => id !== userId)
+      : [...prev, userId]
+  );
+};
+
+// Single user conversation
+const handleConversation = async (userId) => {
+  try {
+    const payload = {
+      user_id: String(userId), // string
+      is_group: false,
+    };
+
+    const response = await getConversation(payload);
+
+    setActiveConversation({
+      first_name: response.data.first_name,
+      last_name: response.data.last_name,
+      username: response.data.username,
+      userid: response.data.user_id,
+      profile: response.data.profile,
+      email: response.data.email,
+    });
+
+    setActiveConversationId(response.data.conversation_id);
+    setShowUpperScreen(false);
+  } catch (error) {
+    console.error("Error getting conversation:", error);
+  }
+};
+
+const createGroup = async () => {
+  if (!groupName.trim()) {
+    alert("Group name is required");
+    return;
+  }
+
+  if (selectedUsers.length === 0) {
+    alert("Select at least one user");
+    return;
+  }
+
+  const userIdsStr = selectedUsers.join(",") + ","; // only selected users
+
+  const payload = {
+    title: groupName,
+    user_ids: userIdsStr,   // backend will append current user's id
+    is_group: true,
+  };
+
+  try {
+    const response = await getConversation(payload);
+    console.log("Group created:", response.data);
+
+    setGroupName("");
+    setSelectedUsers([]);
+    setModalType("message");
+    setShowUpperScreen(false);
+  } catch (error) {
+    console.error("Error creating group:", error);
+  }
+};
 
  useEffect(() => {
     if (activeConversationFromNotification) {
@@ -34,6 +106,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
       setAllUsers(usersResponse.data);
 
       const convResponse = await getAllConversation();
+      // console.log(convResponse.data)
       setAllConversation(convResponse.data);
     } catch (err) {
       console.error("Polling error:", err);
@@ -52,28 +125,6 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
       clearInterval(pollingRef.current);
     };
   }, []);
-
-  const handleConversation = async (userId) => {
-    try {
-      const response = await getConversation(userId);
-      setActiveConversation({
-        first_name: response.data.first_name,
-        last_name: response.data.last_name,
-        username: response.data.username,
-        userid: response.data.id,
-        profile: response.data.profile,
-        email : response.data.email,
-      });
-      const conversation_id = response.data.conversation_id;
-      setActiveConversationId(conversation_id);
-      setShowUpperScreen(false);
-    } catch (error) {
-      console.error("Error getting conversation:", error);
-    }
-  };
-
- 
-// get conversation id from the notification 
 
   // Filter conversations based on search term
   const filteredConversations = allconversations
@@ -160,6 +211,21 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
           <div className="flex-1 overflow-y-auto p-2 min-h-0">
             {sortedConversations.map((conversation) => {
               const isActive = conversation.conversation_id === activeconversationid;
+              // Determine display name
+              let title = "";
+              let profile = "";
+              
+              if (conversation.is_group) {
+                title = conversation.title;
+                profile = "/defaultgroup.JPG"
+              } else {
+                title = conversation.first_name
+                ? `${conversation.first_name} ${conversation.last_name || ""}`
+                : conversation.email;
+
+                profile = conversation.profile ? `${Backend_url}${conversation.profile}` : "/defaultuser.JPG"
+              }
+
 
               return (
                 <div
@@ -173,17 +239,18 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
                       username: conversation.username,
                       userid: conversation.user_id,
                       profile: conversation.profile,
-                      email : conversation.email
+                      email : conversation.email,
+                      title : title,
                     });
                   }}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <img
-                      src={conversation.profile ? `${Backend_url}${conversation.profile}` : "/defaultuser.JPG"}
+                      src={profile}
                       className="h-10 w-10 rounded-full object-cover flex-shrink-0 transition-transform duration-200 hover:scale-150 border-2 border-cyan-500"
                     />
                     <div className="flex flex-col min-w-0">
-                      <p className="truncate font-serif">{conversation.first_name? conversation.first_name : conversation.email} {conversation.last_name}</p>
+                      <p className="truncate font-serif"> {title} </p>
                       <span className="text-xs text-gray-600 truncate">{conversation.latest_message_body}</span>
                     </div>
                   </div>
@@ -240,64 +307,164 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
         </div>
       )}
 
+{/* Upper Screen Modal */}
+{showUpperScreen && (
+  <div className="fixed inset-0 flex items-center justify-center z-50">
+    {/* Overlay */}
+    <div
+      className="absolute inset-0 bg-black/30"
+      onClick={() => {
+        setShowUpperScreen(false);
+        setModalType("message");
+        setSelectedUsers([]);
+        setGroupName("");
+      }}
+    />
 
-      {/* upper screen */}
-      {showUpperScreen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          {/* Overlay */}
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setShowUpperScreen(false)}
-          ></div>
+    {/* MODAL (FIXED HEIGHT) */}
+    <div className="relative w-[95%] sm:w-3/4 md:w-1/2 lg:w-3/5
+      h-[80vh] bg-cyan-500 rounded-lg p-4 z-50 flex flex-col">
 
-          {/* Modal */}
-          <div className="relative w-[95%] sm:w-3/4 md:w-1/2 lg:w-3/5 bg-cyan-500 rounded-lg p-4 z-50 flex flex-col max-h-[90vh]">
-            <h3 className="text-left font-bold text-lg mb-2 ml-2">New Message</h3>
+      {/* Tabs (FIXED) */}
+      <div className="flex gap-6 border-b-2 border-black pb-1 shrink-0">
+        <button
+          onClick={() => setModalType("message")}
+          className={`font-bold text-lg ${
+            modalType === "message" ? "underline" : ""
+          }`}
+        >
+          New Message
+        </button>
 
-            {/* Search Input */}
-            <div className="w-full my-2 px-2 shrink-0">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="w-full bg-gray-100 text-black placeholder-gray-400 pl-3 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-black" />
-              </div>
-            </div>
+        <button
+          onClick={() => setModalType("group")}
+          className={`font-bold text-lg ${
+            modalType === "group" ? "underline" : ""
+          }`}
+        >
+          New Group
+        </button>
+      </div>
 
-            {/* User List */}
-            <div className="flex-1 overflow-y-auto mt-2">
-              {allusers
-                .filter((user) =>
-                  `${user.username} ${user.email}${user.first_name} ${user.last_name}`
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
-                )
-                .map((user) => (
-                  <div
-                    key={user.id}
-                    onClick={() => handleConversation(user.id)}
-                    className="w-[99%] bg-gray-100 m-1 text-black flex items-center gap-2 min-w-0 pl-3 pr-4 py-2 rounded cursor-pointer hover:bg-yellow-500"
-                  >
-                    <img
-                      src={user.profile ? `${Backend_url}${user.profile}` : "/defaultuser.JPG"}
-                      className="h-8 w-8 rounded-full object-cover flex-shrink-0 border-2 border-black"
-                    />
-                    <div className="flex flex-col min-w-0">
-                      <p className="truncate ">
-                        {user.username ? user.username : user.email} • {user.first_name} {user.last_name}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
+      {/* Search (FIXED) */}
+      <div className="my-2 shrink-0">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search"
+            className="w-full bg-gray-100 pl-3 pr-10 py-2 rounded border-2 border-black"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2" />
         </div>
-      )}
+      </div>
 
+      {/* Group Name (FIXED HEIGHT) */}
+      <div className="flex items-center gap-3 mb-2 min-h-[48px] shrink-0">
+        <span
+          className={`font-semibold ${
+            modalType === "group" ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          Group Name
+        </span>
+
+        <input
+          type="text"
+          value={groupName}
+          onChange={(e) => setGroupName(e.target.value)}
+          placeholder="Enter group name"
+          disabled={modalType !== "group"}
+          className={`flex-1 bg-gray-100 border-2 border-black px-2 py-1 rounded
+            ${modalType !== "group" ? "opacity-0 pointer-events-none" : ""}`}
+        />
+      </div>
+
+      {/* USERS LIST (ONLY SCROLL AREA) */}
+      <div className="flex-1 overflow-y-auto border-t border-black/20 pt-2">
+        {allusers
+          .filter((u) =>
+            `${u.username} ${u.email} ${u.first_name} ${u.last_name}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          )
+          .map((user) => {
+            const isSelected = selectedUsers.includes(user.id);
+
+            return (
+              <div
+                key={user.id}
+                onClick={() => {
+                  if (modalType === "message") {
+                    handleConversation(user.id);
+                    setShowUpperScreen(false);
+                  }
+
+                  if (modalType === "group") {
+                    toggleUserSelection(user.id);
+                  }
+                }}
+                className={`flex items-center gap-3 p-2 m-1 rounded cursor-pointer
+                  ${
+                    modalType === "message"
+                      ? "bg-gray-100 hover:bg-yellow-400"
+                      : isSelected
+                      ? "bg-yellow-300"
+                      : "bg-gray-100 hover:bg-gray-200"
+                  }`}
+              >
+                <img
+                  src={
+                    user.profile
+                      ? `${Backend_url}${user.profile}`
+                      : "/defaultuser.JPG"
+                  }
+                  className="h-8 w-8 rounded-full border-2 border-black"
+                />
+
+                <p className="flex-1 truncate">
+                  {user.username || user.email}
+                  {(user.first_name || user.last_name) &&
+                    ` • ${user.first_name} ${user.last_name}`}
+                </p>
+
+                {/* Checkbox (GROUP MODE ONLY) */}
+                {modalType === "group" && (
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    readOnly
+                    onClick={(e) => e.stopPropagation()}
+                    className="
+                      w-5 h-5
+                      scale-125
+                      accent-black
+                      border-2 border-black
+                      cursor-pointer
+                    "
+                  />
+                )}
+              </div>
+            );
+          })}
+      </div>
+
+      {/* CREATE GROUP BUTTON (FIXED) */}
+      <div className="shrink-0 mt-2 flex justify-end">
+        {modalType === "group" && (
+          <button
+            onClick={createGroup}
+            disabled={!groupName || selectedUsers.length === 0}
+            className="bg-yellow-500 px-4 py-2 border-2 border-black font-bold disabled:opacity-70 rounded-lg"
+          >
+            Create Group ({selectedUsers.length})
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
     </div>
     </>
   );

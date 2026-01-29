@@ -239,7 +239,7 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
           <div className="flex items-center gap-2 flex-1">
             <img src={activeconversation.profile ? `${Backend_url}${activeconversation.profile}` : "/defaultuser.JPG"} className="h-12 w-12 rounded-full border-2 border-black" />
             <div>
-              <p className="text-lg tracking-wide font-semibold">{activeconversation.first_name ? activeconversation.first_name : "User"} {activeconversation.last_name}</p>
+              <p className="text-lg tracking-wide font-semibold">{activeconversation.title}</p>
               <p className="text-sm">{activeconversation.username ? activeconversation.username :activeconversation.email}</p>
             </div>
           </div>
@@ -443,8 +443,7 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
             )}
           </div>
         </div>
-
-
+        
       </div>
     </div>
   );

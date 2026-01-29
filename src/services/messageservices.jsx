@@ -17,17 +17,13 @@ export const fetchAllUsers = async () => {
 };
 
 // get conversation
-export const getConversation = async (user_id) => {
+// Unified getConversation call for single and group
+export const getConversation = async (payload) => {
   const response = await axios.post(
     `${API_BASE_URL}/getConversation/`,
-    {
-      user_id,
-    },
-    {
-      headers: getAuthHeaders(),
-    }
+    payload,
+    { headers: getAuthHeaders() }
   );
-
   return response.data;
 };
 
