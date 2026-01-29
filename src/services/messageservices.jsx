@@ -8,16 +8,9 @@ const getAuthHeaders = () => {
   return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 };
 
-// fetch all users
-export const fetchAllUsers = async () => {
-  const response = await axios.get(`${API_BASE_URL}/fetchAllUsers/`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
-};
+
 
 // get conversation
-// Unified getConversation call for single and group
 export const getConversation = async (payload) => {
   const response = await axios.post(
     `${API_BASE_URL}/getConversation/`,
@@ -27,25 +20,6 @@ export const getConversation = async (payload) => {
   return response.data;
 };
 
-// get All conversations
-export const getAllConversation = async (user_id) => {
-  const response = await axios.get(`${API_BASE_URL}/getAllConversations/`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
-};
-
-
-// export const sendMessage = async (payload) => {
-//   const response = await axios.post(
-//     `${API_BASE_URL}/sendMessage/`,
-//     payload,
-//     {
-//       headers: getAuthHeaders(),
-//     }
-//   );
-//   return response.data;
-// };
 
 //delete message 
 export const delMessage = async (message_id) => {
@@ -78,7 +52,7 @@ export const updMessage = async (message_id,message_body) => {
   return response.data;
 };
 
-
+// get all conversation messages
 export const getAllConversationMessages = async (conversation_id) =>{
   const response = await axios.post(
     `${API_BASE_URL}/getConversationMessages/`,
@@ -91,3 +65,33 @@ export const getAllConversationMessages = async (conversation_id) =>{
   );
   return response.data;
 }
+
+//  ------------------- not using these api shifted to sockets ---------------------
+
+// export const sendMessage = async (payload) => {
+//   const response = await axios.post(
+//     `${API_BASE_URL}/sendMessage/`,
+//     payload,
+//     {
+//       headers: getAuthHeaders(),
+//     }
+//   );
+//   return response.data;
+// };
+
+// fetch all users
+export const fetchAllUsers = async () => {
+  const response = await axios.get(`${API_BASE_URL}/fetchAllUsers/`, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
+
+// get All conversations
+export const getAllConversation = async (user_id) => {
+  const response = await axios.get(`${API_BASE_URL}/getAllConversations/`, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
+

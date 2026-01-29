@@ -1,24 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
 import ChatArea from "./chatarea";
 import { FaEllipsisV, FaFilter, FaPlus, FaSearch } from "react-icons/fa";
-import { fetchAllUsers, getConversation, getAllConversation } from "../services/messageservices";
+import {  getConversation, getAllConversation } from "../services/messageservices";
 import { formatTime ,formatDate} from "./helpermethods";
+import { useSocket } from "../contexts/SocketContext";
+
 
 function Chatbar({ activeConversationFromNotification, setActiveConversationFromNotification }) {
   const Backend_url = "http://localhost:8000/media/";
 
   const [showUpperScreen, setShowUpperScreen] = useState(false);
-  const [allusers, setAllUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeconversationid, setActiveConversationId] = useState('');
   const [activeconversation, setActiveConversation] = useState(null);
-  const [allconversations, setAllConversation] = useState([]);
-
-  const [modalType, setModalType] = useState("message"); // default is New Message
+  const [modalType, setModalType] = useState("message"); 
   const [groupName, setGroupName] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
-    const pollingRef = useRef(null);
-
+  const { allusers, allconversations } = useSocket(); 
 
 
  const toggleUserSelection = (userId) => {
@@ -29,6 +27,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
   );
 };
 
+
 // Single user conversation
 const handleConversation = async (userId) => {
   try {
@@ -38,7 +37,6 @@ const handleConversation = async (userId) => {
     };
 
     const response = await getConversation(payload);
-
     setActiveConversation({
       first_name: response.data.first_name,
       last_name: response.data.last_name,
@@ -66,11 +64,11 @@ const createGroup = async () => {
     return;
   }
 
-  const userIdsStr = selectedUsers.join(",") + ","; // only selected users
+  const userIdsStr = selectedUsers.join(",") + ","; 
 
   const payload = {
     title: groupName,
-    user_ids: userIdsStr,   // backend will append current user's id
+    user_ids: userIdsStr,  
     is_group: true,
   };
 
@@ -99,47 +97,20 @@ const createGroup = async () => {
     }
     }
   }, [activeConversationFromNotification, allconversations]);
-  // Polling function
-  const pollingFunc = async () => {
-    try {
-      const usersResponse = await fetchAllUsers();
-      setAllUsers(usersResponse.data);
-
-      const convResponse = await getAllConversation();
-      // console.log(convResponse.data)
-      setAllConversation(convResponse.data);
-    } catch (err) {
-      console.error("Polling error:", err);
-    }
-  };
-
-
-  useEffect(() => {
-
-    pollingFunc();
-    pollingRef.current = setInterval(() => {
-      pollingFunc();
-    }, 2000); // poll every 2 seconds
-
-    return () => {
-      clearInterval(pollingRef.current);
-    };
-  }, []);
 
   // Filter conversations based on search term
-  const filteredConversations = allconversations
+  const filteredConversations = (allconversations || [])
     .filter((convo) =>
       `${convo.username || ''} ${convo.first_name || ''} ${convo.last_name || ''}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     );
 
-  // Sort: filtered on top, then the rest
   const sortedConversations = [
     ...filteredConversations,
-    ...allconversations.filter(
+    ...((allconversations || []).filter(
       (c) => !filteredConversations.includes(c)
-    ),
+    )),
   ];
 
   return (
@@ -184,14 +155,14 @@ const createGroup = async () => {
              </div> 
             </div> 
             <div className="flex flex-row overflow-x-auto">
-              {allconversations.slice(0, 4).map((conversation) => (
+              {(allconversations || []).slice(0, 4).map((conversation) => (
                 <div key={conversation.conversation_id} className="flex flex-col items-center ml-4 mt-2 ">
                   <img
                     src={conversation.profile ? `${Backend_url}${conversation.profile}` : "/defaultuser.JPG"}
                     className="h-12 w-12 rounded-full object-cover transition-transform duration-200 hover:scale-150 border-2 border-black "
                   />
                   <span className="text-xs truncate">
-                    {conversation.username ? conversation.username :"User"}
+                    {conversation.username ? conversation.username : "User"}
                   </span>
                 </div>
               ))}
@@ -383,9 +354,9 @@ const createGroup = async () => {
 
       {/* USERS LIST (ONLY SCROLL AREA) */}
       <div className="flex-1 overflow-y-auto border-t border-black/20 pt-2">
-        {allusers
+        {(allusers || [])
           .filter((u) =>
-            `${u.username} ${u.email} ${u.first_name} ${u.last_name}`
+            `${u.username || ''} ${u.email || ''} ${u.first_name || ''} ${u.last_name || ''}`
               .toLowerCase()
               .includes(searchTerm.toLowerCase())
           )
