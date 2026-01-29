@@ -23,27 +23,41 @@ export const SocketProvider = ({ children, onNotification }) => {
 
       ws.onopen = () => setConnected(true);
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (["text", "image", "audio"].includes(data.type) && data.sender_id !== currentUserId) {
-          const msgKey = `${data.conversation_id}-${data.id}`;
-          if (!seenMessages.current.has(msgKey)) {
-            seenMessages.current.add(msgKey);
-            toast(
-              <div className="flex flex-col cursor-pointer" onClick={() => onNotification?.(data.conversation_id)}>
-                <span className="font-semibold text-sm">{data.sender_first_name} {data.sender_last_name}</span>
-                <span className="text-xs text-gray-600 truncate">
-                  {data.type === "text" ? `${data.body?.slice(0,25)}${data.body?.length>25?"...":""}` : `Sent a ${data.type}`}
-                </span>
-              </div>
-            );
-            if (seenMessages.current.size > 50) {
-              const first = seenMessages.current.values().next().value;
-              seenMessages.current.delete(first);
-            }
-          }
-        }
-      };
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      // Ignore non-chat payloads
+      if (!["text", "image", "audio"].includes(data.type)) return;
+
+      // Ignore self messages FOR NOTIFICATIONS ONLY
+      if (data.sender_id === currentUserId) return;
+
+      const msgKey = `${data.conversation_id}-${data.id}`;
+      if (seenMessages.current.has(msgKey)) return;
+
+      seenMessages.current.add(msgKey);
+
+      toast(
+        <div
+          className="flex flex-col cursor-pointer"
+          onClick={() => onNotification?.(data.conversation_id)}
+        >
+          <span className="font-semibold text-sm">
+            {data.sender_first_name} {data.sender_last_name}
+          </span>
+          <span className="text-xs text-gray-600 truncate">
+            {data.type === "text"
+              ? `${data.body?.slice(0, 25)}${data.body?.length > 25 ? "..." : ""}`
+              : `Sent a ${data.type}`}
+          </span>
+        </div>
+      );
+      
+      if (seenMessages.current.size > 50) {
+        const first = seenMessages.current.values().next().value;
+        seenMessages.current.delete(first);
+      }
+    };
 
       ws.onclose = () => {
         setConnected(false);

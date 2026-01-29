@@ -1,22 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSocket } from "../contexts/SocketContext";
 import { toast } from "react-toastify";
-
 import {
   FaEllipsisV, FaInfoCircle, FaPaperPlane, FaMicrophone,
   FaPaperclip, FaPhone, FaSearch, FaVideo, FaArrowLeft,
-  FaStop, FaTimes ,FaCheck
+  FaStop, FaTimes, FaCheck
 } from "react-icons/fa";
 
-import { convertToBase64, convertAudioBlobToBase64, formatTime, formatDate } from "./helpermethods";
-import { getAllConversationMessages , updMessage ,delMessage} from "../services/messageservices";
+import { convertToBase64, convertAudioBlobToBase64, formatTime } from "./helpermethods";
+import { getAllConversationMessages, updMessage, delMessage } from "../services/messageservices";
 
 function ChatArea({ conversationid, activeconversation, onBack }) {
   const Backend_url = "http://localhost:8000/media/";
 
   const [showSearchbar, setshowSearchbar] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -38,6 +36,7 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
 
+  // ---------------- Fetch messages ----------------
   const getMessages = async () => {
     if (!conversationid) return;
     try {
@@ -51,56 +50,55 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
   useEffect(() => { if(conversationid) getMessages(); }, [conversationid]);
   useEffect(() => { scrollToBottom(); }, [messages]);
 
-  // helper function for hightlight 
+  // ---------------- Highlight search ----------------
   const highlightText = (text, term) => {
     if (!term) return text;
-
     const regex = new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, "gi");
     const parts = text.split(regex);
-
     return parts.map((part, i) =>
-      regex.test(part) ? (
-        <mark key={i} className="bg-yellow-300">{part}</mark>
-      ) : (
-        part
-      )
+      regex.test(part) ? <mark key={i} className="bg-yellow-300">{part}</mark> : part
     );
   };
 
-  // ---------------- Listen global messages ----------------
+  // ---------------- Listen global / conversation messages ----------------
   useEffect(() => {
     if (!wsRef.current) return;
 
-    const handleGlobalMessage = (event) => {
-      const data = JSON.parse(event.data);
+    const handleMessage = (event) => {
+      let raw;
+      try { raw = JSON.parse(event.data); } catch { return; }
+      if (!raw.conversation_id || !raw.sender_id) return;
 
-      if (data.conversation_id === conversationid) {
-        setMessages(prev => {
-          if (prev.some(msg => msg.id === data.id)) return prev; // prevent duplicates
-          return [...prev, data];
-        });
-      }
+      const message = { ...raw, type: raw.type === "chat_message" ? raw.msg_type : raw.type };
+
+      if (message.conversation_id !== conversationid) return;
+
+      setMessages((prev) => {
+        // Replace temporary message if exists
+        const tempIndex = prev.findIndex(msg => msg.id.toString().startsWith("temp-") && msg.body === message.body);
+        if (tempIndex !== -1) {
+          const newArr = [...prev];
+          newArr[tempIndex] = message;
+          return newArr;
+        }
+        // Avoid duplicates
+        if (prev.some(msg => msg.id === message.id)) return prev;
+        return [...prev, message];
+      });
     };
 
-    wsRef.current.addEventListener("message", handleGlobalMessage);
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.removeEventListener("message", handleGlobalMessage);
-      }
-    };
+    wsRef.current.addEventListener("message", handleMessage);
+    return () => wsRef.current?.removeEventListener("message", handleMessage);
   }, [conversationid, wsRef]);
 
-  // ---------------- Send message ----------------
+  // ---------------- Send message with optimistic UI ----------------
   const sendmessage = async () => {
     if (isSending) return;
-    if (!connected) {
-      toast("Socket not connected yet!");
-      return;
-    }
+    if (!connected) { toast("Socket not connected yet!"); return; }
     if (!messageText.trim() && !selectedImage && !audioBlob) return;
 
     setIsSending(true);
+
     try {
       let base64 = "";
       let messageType = "text";
@@ -113,14 +111,33 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
         messageType = "audio";
       }
 
+      // ✅ Optimistic UI
+      const tempId = `temp-${Date.now()}`;
+      const tempMessage = {
+        id: tempId,
+        type: messageType,
+        body: messageText,
+        media_url: messageType !== "text" ? base64 : null,
+        conversation_id: conversationid,
+        sender_id: parseInt(localStorage.getItem("userId")),
+        sender_first_name: localStorage.getItem("userFirstName"),
+        status: "active",
+        is_edited: false,
+        created_at: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, tempMessage]);
+      scrollToBottom();
+
+      // Send to backend
       sendMessage({
-        type: "chat_message",      // ✅ must match backend
+        type: "chat_message",
         conversation_id: conversationid,
         body: messageText,
-        msg_type: messageType,      // ✅ text / image / audio
+        msg_type: messageType,
         media: base64
       });
 
+      // Reset input
       setMessageText("");
       setSelectedImage(null);
       setImagePreview(null);
@@ -131,7 +148,7 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
     }
   };
 
-  // ------------------ Helpers ------------------
+  // ---------------- Record audio ----------------
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -147,76 +164,46 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
       recorder.start();
       setMediaRecorder(recorder);
       setIsRecording(true);
-    } catch(err) {
-      console.error("Mic error:", err);
-    }
+    } catch(err) { console.error("Mic error:", err); }
   };
   const stopRecording = () => { mediaRecorder?.stop(); setIsRecording(false); };
   const cancelRecording = () => { setAudioBlob(null); setAudioPreview(null); setIsRecording(false); };
 
-  // ------------------ Click outside menu ------------------
+  // ---------------- Click outside handlers ----------------
   useEffect(() => {
     const handleClickOutside = (e) => {
-      // Close menu if clicked outside
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpenId(null);
-      }
-
-      // Close search bar if clicked outside
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setshowSearchbar(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpenId(null);
+      if (searchRef.current && !searchRef.current.contains(e.target)) setshowSearchbar(false);
     };
-
-    document.addEventListener("mousedown", handleClickOutside); // use mousedown for both
+    document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
-
+  // ---------------- Delete / Update ----------------
   const handleDelete = async (message_id) => {
-    try {
-      await delMessage(message_id);
-      setMenuOpenId(null);
-    } catch (err) { console.error("Delete failed", err); }
+    try { await delMessage(message_id); setMenuOpenId(null); } 
+    catch (err) { console.error("Delete failed", err); }
   };
 
   const handleUpdate = (message_id ,message_body) => {
-    setEditingMessageId(message_id);       // which message is being edited
-    setMessageText(message_body);          // fill input bar with current message
-    setOriginalMessageText(message_body);  // backup original text
-    setMenuOpenId(null);                   // close menu
+    setEditingMessageId(message_id);
+    setMessageText(message_body);
+    setOriginalMessageText(message_body);
+    setMenuOpenId(null);
   };
 
-
   const confirmUpdate = async () => {
-  if (!editingMessageId || !messageText.trim()) return;
+    if (!editingMessageId || !messageText.trim()) return;
+    try {
+      setIsSending(true);
+      await updMessage(editingMessageId, messageText); 
+      setMessages(prev => prev.map(msg => msg.id === editingMessageId ? { ...msg, body: messageText } : msg));
+      setMessageText(""); setEditingMessageId(null); setOriginalMessageText("");
+    } catch (err) { console.error("Update failed", err); } 
+    finally { setIsSending(false); }
+  };
 
-  try {
-    setIsSending(true);
-    console.log("id ", editingMessageId)
-    console.log("wertyuert",messageText)
-    // Call your backend API to update message
-    await updMessage(editingMessageId, messageText); 
-
-    // Optimistically update message locally
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === editingMessageId ? { ...msg, body: messageText } : msg
-      )
-    );
-
-    // Reset input
-    setMessageText("");
-    setEditingMessageId(null);
-    setOriginalMessageText("");
-  } catch (err) {
-    console.error("Update failed", err);
-  } finally {
-    setIsSending(false);
-  }
-};
-
+  // ---------------- UI ----------------
   if(!conversationid || !activeconversation) {
     return (
       <div className="flex flex-1 bg-gray-100 h-full w-full pl-1 ">
@@ -232,7 +219,6 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
   return (
     <div className="flex flex-1 pl-1 bg-gray-200 h-full w-full">
       <div className="w-full flex flex-col bg-white h-full">
-
         {/* HEADER */}
         <div className="flex items-center h-14 border-b px-3 bg-cyan-500 shrink-0 relative">
           <button onClick={onBack} className="md:hidden mr-2 text-xl"><FaArrowLeft /></button>
@@ -240,41 +226,32 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
             <img src={activeconversation.profile ? `${Backend_url}${activeconversation.profile}` : "/defaultuser.JPG"} className="h-12 w-12 rounded-full border-2 border-black" />
             <div>
               <p className="text-lg tracking-wide font-semibold">{activeconversation.title}</p>
-              <p className="text-sm">{activeconversation.username ? activeconversation.username :activeconversation.email}</p>
+              <p className="text-sm">{activeconversation.username || activeconversation.email}</p>
             </div>
           </div>
 
           {/* Search bar overlay */}
           {showSearchbar && (
-        <div
-          ref={searchRef}
-          onClick={(e) => e.stopPropagation()} 
-          className="absolute top-full right-0 w-full max-w-md mx-auto z-50 p-2 rounded shadow-lg flex items-center"
-        >
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded text-black border-2 border-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-          />
-          <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-black" />
-        </div>
+            <div ref={searchRef} onClick={e => e.stopPropagation()} className="absolute top-full right-0 w-full max-w-md mx-auto z-50 p-2 rounded shadow-lg flex items-center">
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded text-black border-2 border-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-black" />
+            </div>
           )}
 
           <div className="flex gap-4 text-lg">
-            <FaSearch
-          onClick={(e) => {
-            e.stopPropagation(); 
-            setshowSearchbar(prev => !prev);
-          }}
-          className="cursor-pointer"
-        />
+            <FaSearch onClick={(e) => { e.stopPropagation(); setshowSearchbar(prev => !prev); }} className="cursor-pointer" />
             <FaPhone />
             <FaVideo />
             <FaInfoCircle />
           </div>
         </div>
+
         {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto bg-gray-100 p-3 space-y-3">
           {messages.map((message) => {
@@ -283,54 +260,25 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
 
             return (
               <div key={message.id} className={`flex items-end gap-2 ${isMine ? "justify-end" : ""}`}>
-
-                {!isMine && (
-                  <img src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"} className="h-8 w-8 rounded-full" />
-                )}
-
+                {!isMine && <img src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"} className="h-8 w-8 rounded-full" />}
                 <div className="relative max-w-[60%] group">
-
                   <p className={`text-xs text-gray-500 flex ${isMine ? "justify-end" : ""}`}>
-                    {message.sender_first_name ? message.sender_first_name : "User"} • {formatTime(message.created_at)}
-                    {
-                    message.created_at!== message.updated_at && (
-                      <span className="text-xs text-gray-500 ml-2">Edited</span>
-                    )}
+                    {message.sender_first_name || "User"} • {formatTime(message.created_at)}
+                    {message.is_edited && <span className="text-xs text-gray-500 ml-2">Edited</span>}
                   </p>
-                 
                   <div className={`relative p-2 rounded-xl text-sm ${isMine ? "bg-blue-100" : "bg-gray-200"}`}>
                     {message.status === "delete" ? (
                       <span className="italic text-gray-500">This message was deleted by {message.sender_first_name}</span>
                     ) : (
                       <>
-                        {message.type === "image" && (
-                          <img
-                            src={`${Backend_url}${message.media_url}`}
-                            className="rounded-lg max-w-[200px] max-h-[200px] object-cover"
-                            alt="sent image"
-                          />
-                        )}
-
-                        {message.type === "audio" && <audio controls src={`${Backend_url}${message.media_url}`} />}
-                        {message.type === "text" && (
-                          <span>
-                            {highlightText(message.body, searchTerm)}
-                          </span>
-                        )}
+                        {message.type === "image" && <img src={message.media_url?.startsWith("http") ? message.media_url : `${Backend_url}${message.media_url}`} className="rounded-lg max-w-[200px] max-h-[200px] object-cover" alt="sent image" />}
+                        {message.type === "audio" && message.media_url && <audio controls src={`${Backend_url}${message.media_url}`} onLoadedData={scrollToBottom} />}
+                        {message.type === "text" && <span>{highlightText(message.body, searchTerm)}</span>}
                       </>
                     )}
 
-                    {message.status !== "delete" && isMine &&(
-                      <button
-                        ref={menuRef}
-                        onMouseDown={(e) => {
-                        e.stopPropagation(); // prevent document mousedown from firing
-                        setMenuOpenId(menuOpenId === message.id ? null : message.id);
-                        }}
-                        className={`absolute top-1/2 -translate-y-1/2 ${isMine ? "-left-6" : "-right-6"}`}
-                      >
-                        <FaEllipsisV />
-                      </button>
+                    {message.status !== "delete" && isMine && (
+                      <button ref={menuRef} onMouseDown={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === message.id ? null : message.id); }} className={`absolute top-1/2 -translate-y-1/2 ${isMine ? "-left-6" : "-right-6"}`}><FaEllipsisV /></button>
                     )}
 
                     {menuOpenId === message.id && (
@@ -340,12 +288,8 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
                       </div>
                     )}
                   </div>
-                  
                 </div>
-
-                {isMine && (
-                  <img src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"} className="h-8 w-8 rounded-full" />
-                )}
+                {isMine && <img src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"} className="h-8 w-8 rounded-full" />}
               </div>
             );
           })}
@@ -373,77 +317,26 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
         {/* INPUT */}
         <div className="border-t p-3 bg-cyan-500 shrink-0">
           <div className="flex items-center gap-2">
-            {/* Attach button (always visible) */}
-            <input
-              type="file"
-              accept="image/*"
-              id="imageInput"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if(file) { setSelectedImage(file); setImagePreview(URL.createObjectURL(file)); }
-              }}
-            />
-            <button title='Attach' onClick={() => document.getElementById("imageInput").click()}>
-              <FaPaperclip className="text-xl" />
-            </button>
+            <input type="file" accept="image/*" id="imageInput" className="hidden" onChange={(e) => {
+              const file = e.target.files[0];
+              if(file) { setSelectedImage(file); setImagePreview(URL.createObjectURL(file)); }
+            }}/>
+            <button title='Attach' onClick={() => document.getElementById("imageInput").click()}><FaPaperclip className="text-xl" /></button>
 
-            {/* Text input */}
-            <input
-              type="text"
-              placeholder="Write message here"
-              className="flex-1 px-4 py-2 border rounded-full outline-none"
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
+            <input type="text" placeholder="Write message here" className="flex-1 px-4 py-2 border rounded-full outline-none" value={messageText} onChange={(e) => setMessageText(e.target.value)}
               onKeyUp={(e) => {
-                if(e.key === "Enter" && !isSending){
-                  if(editingMessageId){
-                    confirmUpdate();
-                  } else {
-                    sendmessage();
-                  }
-                }
+                if(e.key === "Enter" && !isSending) { editingMessageId ? confirmUpdate() : sendmessage(); }
               }}
             />
 
-            {/* Microphone (hide if recording or editing) */}
-            {!isRecording && !audioPreview && !editingMessageId && (
-              <button onClick={startRecording} title='Voice Message'>
-                <FaMicrophone className="text-xl" />
-              </button>
-            )}
-            {isRecording && (
-              <button onClick={stopRecording} className="text-red-600">
-                <FaStop className='text-lg' />
-              </button>
-            )}
+            {!isRecording && !audioPreview && !editingMessageId && <button onClick={startRecording} title='Voice Message'><FaMicrophone className="text-xl" /></button>}
+            {isRecording && <button onClick={stopRecording} className="text-red-600"><FaStop className='text-lg' /></button>}
 
-            {/* Send / Update button */}
-            <button
-              onClick={editingMessageId ? confirmUpdate : sendmessage}
-              disabled={isSending}
-            >
-              {editingMessageId ? <FaCheck className="text-xl text-green-600" /> : <FaPaperPlane className="text-xl" />}
-            </button>
+            <button onClick={editingMessageId ? confirmUpdate : sendmessage} disabled={isSending}>{editingMessageId ? <FaCheck className="text-xl text-green-600" /> : <FaPaperPlane className="text-xl" />}</button>
 
-            {/* Cancel editing */}
-            {editingMessageId && (
-              <button
-                onClick={() => {
-                  setMessageText("");           
-                  setEditingMessageId(null);    
-                  setOriginalMessageText("");   
-                  setSelectedImage(null);       
-                  setImagePreview(null);        
-                }}
-                className="text-red-500 ml-2"
-              >
-                <FaTimes />
-              </button>
-            )}
+            {editingMessageId && <button onClick={() => { setMessageText(""); setEditingMessageId(null); setOriginalMessageText(""); setSelectedImage(null); setImagePreview(null); }} className="text-red-500 ml-2"><FaTimes /></button>}
           </div>
         </div>
-        
       </div>
     </div>
   );
