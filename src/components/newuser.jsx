@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { fetchAllUsers } from "../services/messageservices";
 import { addUser } from "../services/userService";
 import { FaUserFriends, FaUserPlus } from "react-icons/fa";
+const Backend_url = import.meta.env.BACKEND_URL;
 
 function NewUser() {
-  
-  const Backend_url = "http://localhost:8000/media/";
   const [allusers, setAllUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [emailerr, setEmailErr] =useState('');

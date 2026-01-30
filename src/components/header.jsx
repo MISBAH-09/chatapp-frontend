@@ -3,13 +3,13 @@ import { FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser, updateUser , logoutUser } from "../services/userService";
 import { convertToBase64 } from "./helpermethods";
+const Backend_url = import.meta.env.BACKEND_URL;
 
 function Header() {
   const [currentUser, setCurrentUser] = useState({});
   const [upperScreen, setUpperScreen] = useState(false);
   const [profileFile, setProfileFile] = useState(null);
   const [preview, setPreview] = useState("/defaultuser.JPG");
-  const Backend_url = "http://localhost:8000/media/";
 
   const usernameRef = useRef();
   const emailRef = useRef();
@@ -101,14 +101,6 @@ function Header() {
 
         {/* Right: Icons + User info pinned to right */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          {/* <button aria-label="messages" className="relative p-1 rounded-md hover:text-black">
-            <FaRegComment className="text-xl text-black-400" />
-          </button>
-          <button aria-label="notifications" className="relative p-1 rounded-md hover:text-black">
-            <FaBell className="text-xl text-black-400" />
-          </button> */}
-
-
           <div className="flex items-center gap-3 ml-4 mr-10 " onClick={()=> setUpperScreen(true)}>
             <img src={currentUser.profile ? `${Backend_url}${currentUser.profile}` : "/defaultuser.JPG"}
              alt="avatar" className="h-12 w-12 border-2 border-black rounded-full object-cover border-2 border-black transition-transform duration-200 hover:scale-150"

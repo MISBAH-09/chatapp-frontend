@@ -9,9 +9,9 @@ import {
 
 import { convertToBase64, convertAudioBlobToBase64, formatTime } from "./helpermethods";
 import { getAllConversationMessages, updMessage, delMessage } from "../services/messageservices";
+const Backend_url = import.meta.env.BACKEND_URL;
 
 function ChatArea({ conversationid, activeconversation, onBack }) {
-  const Backend_url = "http://localhost:8000/media/";
 
   const [showSearchbar, setshowSearchbar] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
