@@ -4,13 +4,12 @@ import { addUser } from "../services/userService";
 import { FaUserFriends, FaUserPlus } from "react-icons/fa";
 
 function NewUser() {
+  
   const Backend_url = "http://localhost:8000/media/";
-
   const [allusers, setAllUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [emailerr, setEmailErr] =useState('');
 
-  const pollingRef = useRef(null);
 
   // Fetch users
   const pollingFunc = async () => {
@@ -24,14 +23,6 @@ function NewUser() {
 
   useEffect(() => {
     pollingFunc();
-
-    pollingRef.current = setInterval(() => {
-      pollingFunc();
-    }, 2000);
-
-    return () => {
-      clearInterval(pollingRef.current);
-    };
   }, []);
 
   // Handle new user
@@ -57,6 +48,8 @@ const handlenewUser = async () => {
     
     // Success - clear input
     setSearchTerm("");
+    pollingFunc();
+
   } catch (err) {
     // Backend errors show perfectly!
     console.error("Add user failed", err);

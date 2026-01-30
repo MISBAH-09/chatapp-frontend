@@ -1,117 +1,112 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import ChatArea from "./chatarea";
 import { FaEllipsisV, FaFilter, FaPlus, FaSearch } from "react-icons/fa";
-import {  getConversation, getAllConversation } from "../services/messageservices";
-import { formatTime ,formatDate} from "./helpermethods";
+import { getConversation } from "../services/messageservices";
+import { formatTime, formatDate } from "./helpermethods";
 import { useSocket } from "../contexts/SocketContext";
 
-
+// ...imports remain the same
 function Chatbar({ activeConversationFromNotification, setActiveConversationFromNotification }) {
   const Backend_url = "http://localhost:8000/media/";
 
   const [showUpperScreen, setShowUpperScreen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeconversationid, setActiveConversationId] = useState('');
+  const [activeconversationid, setActiveConversationId] = useState(null);
   const [activeconversation, setActiveConversation] = useState(null);
-  const [modalType, setModalType] = useState("message"); 
+  const [modalType, setModalType] = useState("message");
   const [groupName, setGroupName] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const { allusers, allconversations } = useSocket(); 
 
+  const { allusers, allconversations, wsRef } = useSocket();
 
- const toggleUserSelection = (userId) => {
-  setSelectedUsers((prev) =>
-    prev.includes(userId)
-      ? prev.filter((id) => id !== userId)
-      : [...prev, userId]
+  // ---------------- SEARCH FILTER ----------------
+  const filteredConversations = (allconversations || []).filter((convo) =>
+    `${convo.username || ''} ${convo.first_name || ''} ${convo.last_name || ''} `
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
   );
-};
 
+  const sortedConversations = [...filteredConversations]; // Already sorted in context
 
-// Single user conversation
-const handleConversation = async (userId) => {
-  try {
-    const payload = {
-      user_id: String(userId), // string
-      is_group: false,
-    };
+  // ---------------- ACTIVE CONVERSATION FROM NOTIFICATION ----------------
+  useEffect(() => {
+    if (!activeConversationFromNotification) return;
 
-    const response = await getConversation(payload);
-    setActiveConversation({
-      first_name: response.data.first_name,
-      last_name: response.data.last_name,
-      username: response.data.username,
-      userid: response.data.user_id,
-      profile: response.data.profile,
-      email: response.data.email,
-    });
-
-    setActiveConversationId(response.data.conversation_id);
-    setShowUpperScreen(false);
-  } catch (error) {
-    console.error("Error getting conversation:", error);
-  }
-};
-
-const createGroup = async () => {
-  if (!groupName.trim()) {
-    alert("Group name is required");
-    return;
-  }
-
-  if (selectedUsers.length === 0) {
-    alert("Select at least one user");
-    return;
-  }
-
-  const userIdsStr = selectedUsers.join(",") + ","; 
-
-  const payload = {
-    title: groupName,
-    user_ids: userIdsStr,  
-    is_group: true,
-  };
-
-  try {
-    const response = await getConversation(payload);
-    console.log("Group created:", response.data);
-
-    setGroupName("");
-    setSelectedUsers([]);
-    setModalType("message");
-    setShowUpperScreen(false);
-  } catch (error) {
-    console.error("Error creating group:", error);
-  }
-};
-
- useEffect(() => {
-    if (activeConversationFromNotification) {
-      const conversation = allconversations.find(
-      (c) => c.conversation_id === activeConversationFromNotification
+    const convo = allconversations.find(
+      c => c.conversation_id === activeConversationFromNotification
     );
-    if (conversation) {
-      setActiveConversationId(conversation.conversation_id);
-      setActiveConversation(conversation);
-      setActiveConversationFromNotification(null);
-    }
-    }
+
+    setActiveConversationId(activeConversationFromNotification);
+    if (convo) setActiveConversation(convo);
+
+    setActiveConversationFromNotification(null);
   }, [activeConversationFromNotification, allconversations]);
 
-  // Filter conversations based on search term
-  const filteredConversations = (allconversations || [])
-    .filter((convo) =>
-      `${convo.username || ''} ${convo.first_name || ''} ${convo.last_name || ''}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+  // ---------------- USER SELECTION ----------------
+  const toggleUserSelection = (userId) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  // ---------------- HANDLE CONVERSATION ----------------
+  const handleConversation = async (userId) => {
+    try {
+      const payload = { user_id: String(userId), is_group: false };
+      const res = await getConversation(payload);
+      const conv = res.data;
+
+      setActiveConversationId(conv.conversation_id);
+      setActiveConversation(conv);
+
+      wsRef.current?.send(JSON.stringify({
+        type: "join_conversation",
+        conversation_id: conv.conversation_id,
+      }));
+
+      wsRef.current?.send(JSON.stringify({ type: "get_all_conversations" }));
+      setShowUpperScreen(false);
+    } catch (err) {
+      console.error("Conversation error:", err);
+    }
+  };
+
+  // ---------------- CREATE GROUP ----------------
+  const createGroup = async () => {
+    if (!groupName || selectedUsers.length === 0) return;
+    const payload = {
+      title: groupName,
+      user_ids: selectedUsers.join(",") + ",",
+      is_group: true,
+    };
+
+    const res = await getConversation(payload);
+
+    wsRef.current?.send(JSON.stringify({ type: "get_all_conversations" }));
+
+    setActiveConversationId(res.data.conversation_id);
+    setActiveConversation(res.data);
+    setShowUpperScreen(false);
+    setGroupName("");
+    setSelectedUsers([]);
+  };
+
+
+  // -------------------- NOTIFICATION CLICK --------------------
+  useEffect(() => {
+    if (!activeConversationFromNotification) return;
+
+    const convo = allconversations.find(
+      c => c.conversation_id === activeConversationFromNotification
     );
 
-  const sortedConversations = [
-    ...filteredConversations,
-    ...((allconversations || []).filter(
-      (c) => !filteredConversations.includes(c)
-    )),
-  ];
+    setActiveConversationId(activeConversationFromNotification);
+    if (convo) setActiveConversation(convo);
+
+    setActiveConversationFromNotification(null);
+  }, [activeConversationFromNotification, allconversations]);
 
   return (
     <>
@@ -152,21 +147,58 @@ const createGroup = async () => {
               <button>
                 <FaEllipsisV />
               </button>
-             </div> 
             </div> 
-            <div className="flex flex-row overflow-x-auto">
-              {(allconversations || []).slice(0, 4).map((conversation) => (
-                <div key={conversation.conversation_id} className="flex flex-col items-center ml-4 mt-2 ">
-                  <img
-                    src={conversation.profile ? `${Backend_url}${conversation.profile}` : "/defaultuser.JPG"}
-                    className="h-12 w-12 rounded-full object-cover transition-transform duration-200 hover:scale-150 border-2 border-black "
-                  />
-                  <span className="text-xs truncate">
-                    {conversation.username ? conversation.username : "User"}
-                  </span>
-                </div>
-              ))}
-            </div>
+          </div> 
+
+          <div className="flex flex-row overflow-x-auto">
+            {(allconversations || [])
+              .filter(convo => !convo.is_group)        
+              .slice(0, 4)                             
+              .map((conversation) => {
+                // Determine profile & title
+                let title = "";
+                let profile = "";
+
+                if (conversation.displayUser) {
+                  title = conversation.displayUser.first_name
+                    ? conversation.displayUser.first_name
+                    : conversation.displayUser.username
+                    ? conversation.displayUser.username
+                    : "User";
+
+                  profile = conversation.displayUser.profile
+                    ? `${Backend_url}${conversation.displayUser.profile}`
+                    : "/defaultuser.JPG";
+                } else {
+                  title = "User";
+                  profile = "/defaultuser.JPG";
+                }
+
+                return (
+                  <div key={conversation.conversation_id} className="flex flex-col items-center ml-4 mt-2 cursor-pointer"
+                    onClick={() => {
+                      setActiveConversationId(conversation.conversation_id);
+                      setActiveConversation({
+                        is_group: false,
+                        participants: conversation.participants || [],
+                        first_name: conversation.displayUser?.first_name || null,
+                        last_name: conversation.displayUser?.last_name || null,
+                        username: conversation.displayUser?.username || null,
+                        userid: conversation.displayUser?.user_id || null,
+                        profile: conversation.displayUser?.profile || null,
+                        email: conversation.displayUser?.email || null,
+                      });
+                    }}
+                  >
+                    <img
+                      src={profile}
+                      className="h-12 w-12 rounded-full object-cover transition-transform duration-200 hover:scale-150 border-2 border-black"
+                    />
+                    <span className="text-xs truncate">{title}</span>
+                  </div>
+                );
+              })}
+          </div>
         </div>
             
         {/* Recent / All Chats */}
@@ -180,59 +212,63 @@ const createGroup = async () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-2 min-h-0">
-            {sortedConversations.map((conversation) => {
-              const isActive = conversation.conversation_id === activeconversationid;
-              // Determine display name
-              let title = "";
-              let profile = "";
-              
-              if (conversation.is_group) {
-                title = conversation.title;
-                profile = "/defaultgroup.JPG"
-              } else {
-                title = conversation.first_name
-                ? `${conversation.first_name} ${conversation.last_name || ""}`
-                : conversation.email;
+          {sortedConversations.map((conversation) => {
+            const isActive = conversation.conversation_id === activeconversationid;
 
-                profile = conversation.profile ? `${Backend_url}${conversation.profile}` : "/defaultuser.JPG"
-              }
+            // Determine display name and profile
+            let title = "";
+            let profile = "";
 
+            if (conversation.is_group) {
+              title = conversation.title;
+              profile = "/defaultgroup.JPG";
+            } else if (conversation.displayUser) {
+              title = conversation.displayUser.first_name
+                ? `${conversation.displayUser.first_name} ${conversation.displayUser.last_name || ""}`
+                : conversation.displayUser.username || conversation.displayUser.email;
+              profile = conversation.displayUser.profile
+                ? `${Backend_url}${conversation.displayUser.profile}`
+                : "/defaultuser.JPG";
+            }
 
-              return (
-                <div
-                  key={conversation.conversation_id}
-                  className={`w-full h-14 flex items-center rounded-md border-2 border-yellow-500 justify-between mt-2 px-2 overflow-hidden cursor-pointer hover:bg-yellow-500 ${isActive ? 'bg-yellow-500 border-black' : 'bg-white'}`}
-                  onClick={() => {
-                    setActiveConversationId(conversation.conversation_id);
-                    setActiveConversation({
-                      first_name: conversation.first_name,
-                      last_name: conversation.last_name,
-                      username: conversation.username,
-                      userid: conversation.user_id,
-                      profile: conversation.profile,
-                      email : conversation.email,
-                      title : title,
-                    });
-                  }}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <img
-                      src={profile}
-                      className="h-10 w-10 rounded-full object-cover flex-shrink-0 transition-transform duration-200 hover:scale-150 border-2 border-cyan-500"
-                    />
-                    <div className="flex flex-col min-w-0">
-                      <p className="truncate font-serif"> {title} </p>
-                      <span className="text-xs text-gray-600 truncate">{conversation.latest_message_body}</span>
-                    </div>
-                  </div>
+            return (
+              <div
+                key={conversation.conversation_id}
+                className={`w-full h-14 flex items-center rounded-md border-2 border-yellow-500 justify-between mt-2 px-2 overflow-hidden cursor-pointer hover:bg-yellow-500 ${isActive ? 'bg-yellow-500 border-black' : 'bg-white'}`}
+                onClick={() => {
+                  setActiveConversationId(conversation.conversation_id);
 
-                  <div className="flex flex-col items-center flex-shrink-0">
-                    <span className="text-[10px] font-semibold">{formatDate(conversation.latest_message_time)}</span>
-                    <span className="text-[10px] text-gray-600">{formatTime(conversation.latest_message_time)}</span>
+                  setActiveConversation({
+                    is_group: conversation.is_group,
+                    title: conversation.is_group ? conversation.title : undefined,
+                    participants: conversation.participants || [],
+                    first_name: conversation.displayUser?.first_name || null,
+                    last_name: conversation.displayUser?.last_name || null,
+                    username: conversation.displayUser?.username || null,
+                    userid: conversation.displayUser?.user_id || null,
+                    profile: conversation.displayUser?.profile || null,
+                    email: conversation.displayUser?.email || null,
+                  });
+                }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <img
+                    src={profile}
+                    className="h-10 w-10 rounded-full object-cover flex-shrink-0 transition-transform duration-200 hover:scale-150 border-2 border-cyan-500"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <p className="truncate font-serif">{title}</p>
+                    <span className="text-xs text-gray-600 truncate">{conversation.latest_message_body}</span>
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="flex flex-col items-center flex-shrink-0">
+                  <span className="text-[10px] font-semibold">{formatDate(conversation.latest_message_time)}</span>
+                  <span className="text-[10px] text-gray-600">{formatTime(conversation.latest_message_time)}</span>
+                </div>
+              </div>
+            );
+          })}
           </div>
         </div>
       </div>
@@ -240,7 +276,8 @@ const createGroup = async () => {
 
 
        {/* Chat Area - Show on mobile when conversation exists, always on desktop */}
-      {activeconversationid ? (
+ 
+      { activeconversationid ? (
         <div className="flex flex-1">
           <ChatArea 
             conversationid={activeconversationid} 
@@ -276,7 +313,8 @@ const createGroup = async () => {
             }}
           />
         </div>
-      )}
+      )} 
+    
 
 {/* Upper Screen Modal */}
 {showUpperScreen && (
