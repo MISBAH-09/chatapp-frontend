@@ -5,7 +5,7 @@ import { getConversation } from "../services/messageservices";
 import { formatTime, formatDate } from "./helpermethods";
 import { useSocket } from "../contexts/SocketContext";
 
-// ...imports remain the same
+
 function Chatbar({ activeConversationFromNotification, setActiveConversationFromNotification }) {
   const Backend_url = "http://localhost:8000/media/";
 
@@ -20,13 +20,25 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
   const { allusers, allconversations, wsRef } = useSocket();
 
   // ---------------- SEARCH FILTER ----------------
-  const filteredConversations = (allconversations || []).filter((convo) =>
-    `${convo.username || ''} ${convo.first_name || ''} ${convo.last_name || ''} `
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+ const filteredConversations = (allconversations || []).filter((convo) => {
+    const search = searchTerm.toLowerCase();
 
-  const sortedConversations = [...filteredConversations]; // Already sorted in context
+    if (convo.is_group) {
+      return (convo.title || "").toLowerCase().includes(search);
+    }
+
+    if (convo.displayUser) {
+      const { username, first_name, last_name, email } = convo.displayUser;
+
+      return `${username || ""} ${first_name || ""} ${last_name || ""} ${email || ""}`
+        .toLowerCase()
+        .includes(search);
+    }
+
+    return false;
+  });
+
+  const sortedConversations = [...filteredConversations]; 
 
   // ---------------- ACTIVE CONVERSATION FROM NOTIFICATION ----------------
   useEffect(() => {
@@ -254,7 +266,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
                 <div className="flex items-center gap-2 min-w-0">
                   <img
                     src={profile}
-                    className="h-10 w-10 rounded-full object-cover flex-shrink-0 transition-transform duration-200 hover:scale-150 border-2 border-cyan-500"
+                    className="h-10 w-10 rounded-full object-cover flex-shrink-0 transition-transform duration-200 hover:scale-150 border-2 border-black"
                   />
                   <div className="flex flex-col min-w-0">
                     <p className="truncate font-serif">{title}</p>
@@ -335,7 +347,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
       h-[80vh] bg-cyan-500 rounded-lg p-4 z-50 flex flex-col">
 
       {/* Tabs (FIXED) */}
-      <div className="flex gap-6 border-b-2 border-black pb-1 shrink-0">
+      <div className="flex gap-6 border-b-2 border-black shrink-0">
         <button
           onClick={() => setModalType("message")}
           className={`font-bold text-lg ${
@@ -365,7 +377,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2" />
+          <FaSearch className="absolute right-5 top-1/2 -translate-y-1/2" />
         </div>
       </div>
 
