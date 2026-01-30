@@ -9,7 +9,7 @@ import {
 
 import { convertToBase64, convertAudioBlobToBase64, formatTime } from "./helpermethods";
 import { getAllConversationMessages, updMessage, delMessage } from "../services/messageservices";
-const Backend_url = import.meta.env.BACKEND_URL;
+const Backend_url = import.meta.env.VITE_BACKEND_URL;
 
 function ChatArea({ conversationid, activeconversation, onBack }) {
 

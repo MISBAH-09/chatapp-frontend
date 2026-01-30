@@ -3,13 +3,14 @@ import { FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser, updateUser , logoutUser } from "../services/userService";
 import { convertToBase64 } from "./helpermethods";
-const Backend_url = import.meta.env.BACKEND_URL;
+const Backend_url = import.meta.env.VITE_BACKEND_URL;
 
 function Header() {
   const [currentUser, setCurrentUser] = useState({});
   const [upperScreen, setUpperScreen] = useState(false);
   const [profileFile, setProfileFile] = useState(null);
   const [preview, setPreview] = useState("/defaultuser.JPG");
+  // const Backend_url = "http://localhost:8000/media/";
 
   const usernameRef = useRef();
   const emailRef = useRef();
@@ -28,12 +29,14 @@ function Header() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await getCurrentUser();
-        // console.log(currentUser)
-        setCurrentUser(currentUser);
-        setPreview(currentUser.profile ? `${Backend_url}${currentUser.profile}` : "/defaultuser.JPG");
+        const user = await getCurrentUser();
+        if (!user) throw new Error("User not found"); // optional, helps debugging
+        setCurrentUser(user);
+        setPreview(user?.profile ? `${Backend_url}${user.profile}` : "/defaultuser.JPG");
       } catch (err) {
         console.error("Error fetching user:", err);
+        setCurrentUser({});             // fallback to empty object
+        setPreview("/defaultuser.JPG"); // fallback image
       }
     };
     fetchUser();

@@ -4,10 +4,13 @@ import { FaEllipsisV, FaFilter, FaPlus, FaSearch } from "react-icons/fa";
 import { getConversation } from "../services/messageservices";
 import { formatTime, formatDate } from "./helpermethods";
 import { useSocket } from "../contexts/SocketContext";
-const Backend_url = import.meta.env.BACKEND_URL;
+const Backend_url = import.meta.env.VITE_BACKEND_URL;
+
 
 
 function Chatbar({ activeConversationFromNotification, setActiveConversationFromNotification }) {
+  // const Backend_url = "http://localhost:8000/media/";
+  // console.log("fcghwvj", Backend_url)
   const [showUpperScreen, setShowUpperScreen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeconversationid, setActiveConversationId] = useState(null);
@@ -437,7 +440,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
                 <img
                   src={
                     user.profile
-                      ? `${Backend_url}${user.profile}`
+                      ? `${Backend_url}${user.profile}}`
                       : "/defaultuser.JPG"
                   }
                   className="h-8 w-8 rounded-full border-2 border-black"
