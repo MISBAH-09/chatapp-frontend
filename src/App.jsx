@@ -1,25 +1,42 @@
 import React, { useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+
 import Login from "./Pages/login";
 import Chat from "./Pages/chat";
 import InviteUser from "./Pages/inviteuser";
+// import FloatingAi from "./components/FloatingAi";
+import FloatingAi from "./components/floatingai";
+
 import { getToken } from "./services/userService";
-import { ToastContainer, toast } from 'react-toastify';
-import { SocketProvider  , useSocket} from "./contexts/SocketContext";
+import { ToastContainer } from "react-toastify";
+import { SocketProvider } from "./contexts/SocketContext";
 
 const PrivateRoute = ({ children }) => {
   const isToken = !!getToken();
   return isToken ? children : <Navigate to="/login" />;
 };
-// import { useState } from "react";
-// import Chat from "./Pages/chat";
 
 function App() {
-  const [activeConversationFromNotification, setActiveConversationFromNotification] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  const [activeConversationFromNotification, setActiveConversationFromNotification] =
+    useState(null);
+
+  // 🔔 Notification click → open chat
   const handleNotification = (conversation_id) => {
     setActiveConversationFromNotification(conversation_id);
+    navigate("/chat");
   };
+
+  // ❌ Hide Floating AI on login page
+  const hideFloatingAi = location.pathname === "/login";
 
   return (
     <SocketProvider onNotification={handleNotification}>
@@ -29,16 +46,25 @@ function App() {
         newestOnTop
         pauseOnHover
       />
+
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/chat" element={
-          <PrivateRoute>
-            <Chat
-              activeConversationFromNotification={activeConversationFromNotification}
-              setActiveConversationFromNotification={setActiveConversationFromNotification}
-            />
-          </PrivateRoute>
-        } />
+
+        <Route
+          path="/chat"
+          element={
+            <PrivateRoute>
+              <Chat
+                activeConversationFromNotification={
+                  activeConversationFromNotification
+                }
+                setActiveConversationFromNotification={
+                  setActiveConversationFromNotification
+                }
+              />
+            </PrivateRoute>
+          }
+        />
 
         <Route
           path="/inviteuser"
@@ -52,14 +78,43 @@ function App() {
         <Route path="/" element={<Navigate to="/chat" />} />
         <Route path="*" element={<Navigate to="/chat" />} />
       </Routes>
+
+      {/* 🤖 Floating AI everywhere except login */}
+      {!hideFloatingAi && <FloatingAi />}
     </SocketProvider>
   );
 }
 
+export default App;
+
+
+// import React, { useState } from "react";
+// import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+// import Login from "./Pages/login";
+// import Chat from "./Pages/chat";
+// import InviteUser from "./Pages/inviteuser";
+// import { getToken } from "./services/userService";
+// import { ToastContainer } from "react-toastify";
+// import { SocketProvider } from "./contexts/SocketContext";
+
+// const PrivateRoute = ({ children }) => {
+//   const isToken = !!getToken();
+//   return isToken ? children : <Navigate to="/login" />;
+// };
+
 // function App() {
+//   const navigate = useNavigate();
+//   const [activeConversationFromNotification, setActiveConversationFromNotification] =
+//     useState(null);
+
+//   // 🔥 Called when user clicks notification
+//   const handleNotification = (conversation_id) => {
+//     setActiveConversationFromNotification(conversation_id);
+//     navigate("/chat"); // ✅ redirect from inviteuser → chat
+//   };
+
 //   return (
-//     <>
-//       <SocketProvider>
+//     <SocketProvider onNotification={handleNotification}>
 //       <ToastContainer
 //         position="top-right"
 //         autoClose={3000}
@@ -67,7 +122,6 @@ function App() {
 //         pauseOnHover
 //       />
 
-//       {/* 🔀 ROUTES ONLY */}
 //       <Routes>
 //         <Route path="/login" element={<Login />} />
 
@@ -75,7 +129,14 @@ function App() {
 //           path="/chat"
 //           element={
 //             <PrivateRoute>
-//               <Chat />
+//               <Chat
+//                 activeConversationFromNotification={
+//                   activeConversationFromNotification
+//                 }
+//                 setActiveConversationFromNotification={
+//                   setActiveConversationFromNotification
+//                 }
+//               />
 //             </PrivateRoute>
 //           }
 //         />
@@ -93,8 +154,7 @@ function App() {
 //         <Route path="*" element={<Navigate to="/chat" />} />
 //       </Routes>
 //     </SocketProvider>
-//     </>
 //   );
 // }
 
-export default App;
+// export default App;

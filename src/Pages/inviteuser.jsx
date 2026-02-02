@@ -10,11 +10,6 @@ function InviteUser() {
       <div className="flex flex-1 overflow-hidden ">
         <Sidebar />
         <NewUser />
-        {/* <div className="flex flex-col flex-1"> */}
-          {/* <h1 className="p-4 text-xl font-semibold">
-            Invite Users Page
-          </h1> */}
-       {/* </div> */}
       </div>
     </div>
   );

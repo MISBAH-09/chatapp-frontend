@@ -35,8 +35,8 @@ function Header() {
         setPreview(user?.profile ? `${Backend_url}${user.profile}` : "/defaultuser.JPG");
       } catch (err) {
         console.error("Error fetching user:", err);
-        setCurrentUser({});             // fallback to empty object
-        setPreview("/defaultuser.JPG"); // fallback image
+        setCurrentUser({});             
+        setPreview("/defaultuser.JPG"); 
       }
     };
     fetchUser();
