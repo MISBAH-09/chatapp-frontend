@@ -206,22 +206,22 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
   // ---------------- UI ----------------
   if(!conversationid || !activeconversation) {
     return (
-      <div className="flex flex-1 bg-gray-100 h-full w-full pl-1 ">
+      <div className="flex flex-1 bg-gray-100 h-full w-full pl-1 font-manrope">
         <div className="w-full flex flex-col h-full items-center justify-center">
           <img src="/logo.png" className="h-40 w-40 rounded-full" />
-          <p className="text-[50px] font-serif">Dreams Chat</p>
-          <p className="text-xl font-mono">Start Messaging</p>
+          <p className="text-[40px]">Dreams Chat</p>
+          <p className="text-xl tracking-widest">Start Messaging</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-1 pl-1 bg-gray-200 h-full w-full">
+    <div className="flex flex-1 pl-1 bg-gray-200 h-full w-full font-manrope">
       <div className="w-full flex flex-col bg-white h-full">
 
         {/* HEADER */}
-        <div className="flex items-center h-14 border-b px-3 bg-cyan-500 shrink-0 relative">
+        <div className="flex items-center h-14 border-b px-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50    shrink-0 relative">
           {/* Back button for mobile */}
           <button onClick={onBack} className="md:hidden mr-2 text-xl">
             <FaArrowLeft />
@@ -365,7 +365,7 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
         )}
 
         {/* INPUT */}
-        <div className="border-t p-3 bg-cyan-500 shrink-0">
+        <div className="border-t p-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50    shrink-0">
           <div className="flex items-center gap-2">
             <input type="file" accept="image/*" id="imageInput" className="hidden" onChange={(e) => {
               const file = e.target.files[0];

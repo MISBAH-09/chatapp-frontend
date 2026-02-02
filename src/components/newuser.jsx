@@ -59,13 +59,13 @@ const handlenewUser = async () => {
 
 
   return (
-    <div className="w-full flex flex-col md:flex-row h-full">
+    <div className="w-full flex flex-col md:flex-row h-full font-manrope">
       {/* ===== ALL USERS ===== */}
       <div className="w-full md:w-1/2 flex border-r-4 border-black">
-        <div className="flex-1 overflow-y-auto pt-1 bg-cyan-500">
-          <div className="flex flex-row items-center ml-2 pt-2 mb-2">
+        <div className="flex-1 overflow-y-auto pt-1 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50">
+          <div className="flex flex-row items-center ml-2 pt-2 mb-2 ">
             <FaUserFriends className="text-3xl mr-4" />
-            <h2 className="font-semibold text-2xl md:text-3xl font-serif tracking-wider">
+            <h2 className="font-semibold text-2xl md:text-3xl ">
               All Users
             </h2>
           </div>
@@ -73,7 +73,7 @@ const handlenewUser = async () => {
           {allusers.map((user) => (
             <div
               key={user.id}
-              className="w-[98%] bg-gray-100 m-1 flex items-center gap-2 min-w-0 pl-3 pr-4 py-2 rounded cursor-pointer hover:bg-yellow-500"
+              className="w-[98%] bg-gray-100 m-1 flex items-center gap-2 min-w-0 pl-3 pr-4 py-2 rounded cursor-pointer hover:bg-gradient-to-r from-yellow-200 to-yellow-400"
             >
               <img
                 src={
@@ -92,10 +92,10 @@ const handlenewUser = async () => {
 
       {/* ===== INVITE USER ===== */}
       <div className="w-full md:w-1/2 flex mt-4 md:mt-0">
-        <div className="w-full flex flex-col bg-cyan-500">
-          <div className="flex flex-row items-center ml-2 pt-2 mb-2">
+        <div className="w-full flex flex-col bg-gradient-to-r from-cyan-400/50 to-cyan-700/50">
+          <div className="flex flex-row items-center ml-2 pt-2 mb-2 ">
             <FaUserPlus className="text-3xl mr-4" />
-            <h2 className="font-semibold text-2xl md:text-3xl font-serif tracking-wider">
+            <h2 className="font-semibold text-2xl md:text-3xl  ">
               Invite Another User
             </h2>
           </div>

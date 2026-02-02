@@ -33,14 +33,14 @@ function Sidebar() {
 
   return (
     <div
-      className={`h-screen bg-cyan-500 border-r border-gray-200 transition-all duration-200 ease-in-out flex flex-col ${
+      className={`h-screen font-manrope bg-gradient-to-r from-cyan-400/70 to-cyan-700/70 border-r border-gray-200 transition-all duration-200 ease-in-out flex flex-col ${
         open ? "w-56" : "w-14"
       }`}
     >
       {/* Toggle */}
       <button
         onClick={() => setOpen((s) => !s)}
-        className="flex items-center gap-2 w-full px-2 py-2 hover:bg-yellow-500"
+        className="flex items-center gap-2 w-full px-2 py-2 hover:bg-gradient-to-r from-yellow-200 to-yellow-400"
         title="Toggle sidebar"
       >
         <FaBars className="ml-1 text-lg" />
@@ -50,7 +50,7 @@ function Sidebar() {
       {/* Chat */}
       <button
         onClick={handleChat}
-        className="flex items-center gap-3 w-full px-2 py-2 hover:bg-yellow-500"
+        className="flex items-center gap-3 w-full px-2 py-2 hover:bg-gradient-to-r from-yellow-200 to-yellow-400"
         title="Chat"
       >
         <FaUser className="ml-1 text-lg" />
@@ -62,7 +62,7 @@ function Sidebar() {
       {/* Invite User */}
       <button
         onClick={handlenewUser}
-        className="flex items-center gap-3 mt-1 w-full px-2 py-2 hover:bg-yellow-500 "
+        className="flex items-center gap-3 mt-1 w-full px-2 py-2 hover:bg-gradient-to-r from-yellow-200 to-yellow-400 "
         title="Add User"
       >
         <FaUserPlus className="ml-1 text-2xl" />
@@ -74,7 +74,7 @@ function Sidebar() {
       {/* Messages */}
       <button
         onClick={handleMessages}
-        className="flex items-center gap-3 w-full px-2 py-2 hover:bg-yellow-500"
+        className="flex items-center gap-3 w-full px-2 py-2 hover:bg-gradient-to-r from-yellow-200 to-yellow-400"
         title="Messages"
       >
 
@@ -87,7 +87,7 @@ function Sidebar() {
       {/* Settings */}
       <button
         onClick={handleSettings}
-        className="flex items-center gap-3 w-full px-2 py-2 hover:bg-yellow-500"
+        className="flex items-center gap-3 w-full px-2 py-2 hover:bg-gradient-to-r from-yellow-200 to-yellow-400"
         title="Settings"
       >
         <FaCog className="ml-1 text-lg" />

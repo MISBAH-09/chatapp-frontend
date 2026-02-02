@@ -125,13 +125,13 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
 
   return (
     <>
-    <div className="flex flex-1">
+    <div className="flex flex-1 font-manrope">
       {/* Chatbar */}
-      <div className={`${activeconversationid ? 'hidden' : 'flex'} md:flex w-full sm:w-1/2 md:w-1/3 lg:w-1/4 bg-cyan-500 flex-col h-full md:shrink-0`}>
+      <div className={`${activeconversationid ? 'hidden' : 'flex'} md:flex w-full sm:w-1/2 md:w-1/3 lg:w-1/4 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50 flex-col h-full md:shrink-0`}>
         
         {/* Chat Header */}
         <div className="w-full h-8 flex mt-2 shrink-0">
-          <h3 className="font-semibold  text-[24px] ml-2 tracking-wider" style={{ fontFamily: 'Times New Roman, Times, serif' }}>
+          <h3 className="ml-1 font-bold  text-[20px] ml-2" >
             Chats
           </h3>
           <div className="ml-auto mr-2 gap-2 flex">
@@ -156,13 +156,13 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
 
         {/* Recent chats */} 
         <div className="flex flex-col shrink-0"> 
-          <div className="w-full h-8 flex mt-2"> 
-            <p className="ml-2 pt-2 pl-2 text-lg font-serif font-semibold">Recent Chats</p> 
-            <div className="ml-auto mr-2 gap-2 flex"> 
+          <div className="w-full h-8 flex mb-1"> 
+            <p className="ml-1 font-bold  text-[20px] ml-2">Recent Chats</p> 
+            {/* <div className="ml-auto mr-2 gap-2 flex"> 
               <button>
                 <FaEllipsisV />
               </button>
-            </div> 
+            </div>  */}
           </div> 
 
           <div className="flex flex-row overflow-x-auto">
@@ -209,7 +209,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
                       src={profile}
                       className="h-12 w-12 rounded-full object-cover transition-transform duration-200 hover:scale-150 border-2 border-black"
                     />
-                    <span className="text-xs truncate">{title}</span>
+                    <span className="text-xs font-helvetica truncate">{title}</span>
                   </div>
                 );
               })}
@@ -220,7 +220,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           {/* All Chats Header */}
           <div className="w-full h-8 flex mt-2 shrink-0">
-            <h3 className="ml-2 pt-2 pl-2 text-lg font-serif font-semibold">All Chats</h3>
+            <h3 className="ml-2 pt-2 pl-2 text-lg  font-semibold">All Chats</h3>
             <div className="ml-auto mr-2 gap-2 flex">
               <button><FaFilter /></button>
             </div>
@@ -249,7 +249,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
             return (
               <div
                 key={conversation.conversation_id}
-                className={`w-full h-14 flex items-center rounded-md border-2 border-yellow-500 justify-between mt-2 px-2 overflow-hidden cursor-pointer hover:bg-yellow-500 ${isActive ? 'bg-yellow-500 border-black' : 'bg-white'}`}
+                className={`w-full h-14 flex items-center rounded-md border-2 border-yellow-500 justify-between mt-2 px-2 overflow-hidden cursor-pointer hover:bg-gradient-to-r from-yellow-400/90 to-yellow-500/90 ${isActive ? 'bg-gradient-to-r from-yellow-400/90 to-yellow-500/90 border-black' : 'bg-white'}`}
                 onClick={() => {
                   setActiveConversationId(conversation.conversation_id);
 
@@ -272,7 +272,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
                     className="h-10 w-10 rounded-full object-cover flex-shrink-0 transition-transform duration-200 hover:scale-150 border-2 border-black"
                   />
                   <div className="flex flex-col min-w-0">
-                    <p className="truncate font-serif">{title}</p>
+                    <p className="truncate ">{title}</p>
                     <span className="text-xs text-gray-600 truncate">{conversation.latest_message_body}</span>
                   </div>
                 </div>
@@ -347,7 +347,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
 
     {/* MODAL (FIXED HEIGHT) */}
     <div className="relative w-[95%] sm:w-3/4 md:w-1/2 lg:w-3/5
-      h-[80vh] bg-cyan-500 rounded-lg p-4 z-50 flex flex-col">
+      h-[80vh] bg-gradient-to-r from-cyan-400 to-cyan-700 rounded-lg p-4 z-50 flex flex-col">
 
       {/* Tabs (FIXED) */}
       <div className="flex gap-6 border-b-2 border-black shrink-0">
@@ -432,9 +432,9 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
                 className={`flex items-center gap-3 p-2 m-1 rounded cursor-pointer
                   ${
                     modalType === "message"
-                      ? "bg-gray-100 hover:bg-yellow-400"
+                      ? "bg-gray-100 hover:bg-gradient-to-r from-yellow-400/90 to-yellow-500/90"
                       : isSelected
-                      ? "bg-yellow-300"
+                      ? "bg-gradient-to-r from-yellow-400/90 to-yellow-500/90"
                       : "bg-gray-100 hover:bg-gray-200"
                   }`}
               >
@@ -480,7 +480,7 @@ function Chatbar({ activeConversationFromNotification, setActiveConversationFrom
           <button
             onClick={createGroup}
             disabled={!groupName || selectedUsers.length === 0}
-            className="bg-yellow-500 px-4 py-2 border-2 border-black font-bold disabled:opacity-70 rounded-lg"
+            className="bg-gradient-to-r from-yellow-200/90 to-yellow-400/90 px-4 py-2 border-2 border-black font-bold disabled:opacity-70 rounded-lg"
           >
             Create Group ({selectedUsers.length})
           </button>

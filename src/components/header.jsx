@@ -79,11 +79,11 @@ function Header() {
 
   return (
     <>
-    <header className="w-full bg-cyan-500 text-black border-b-2 border-black relative">
+    <header className="w-full font-manrope bg-gradient-to-r from-cyan-400/50 to-cyan-700/50  text-black border-b-2 border-black relative">
       <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
         <img src="/logo.png" alt="logo" className="h-10 w-10 object-contain rounded-full" />
         <div className="hidden sm:flex flex-col">
-          <span className="text-lg  font-mono font-semibold">DreamsChat</span>
+          <span className="text-lg  font-manrope font-semibold">DreamsChat</span>
           <span className="text-xs font-mono text-black">Free Chat App</span>
         </div>
       </div>
@@ -121,7 +121,7 @@ function Header() {
      {/* Upper Screen Modal */}
       {upperScreen && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-cyan-500 rounded-lg shadow-lg w-11/12 max-w-4xl p-6 flex gap-6">
+          <div className="bg-gradient-to-r from-cyan-400/90 to-cyan-700/90 rounded-lg shadow-lg w-11/12 max-w-4xl p-6 flex gap-6">
             {/* Left: Profile image */}
             <div className="flex-shrink-0 flex flex-col items-center gap-2">
               <img
