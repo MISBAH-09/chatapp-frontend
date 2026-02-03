@@ -13,6 +13,7 @@ const Backend_url = import.meta.env.VITE_BACKEND_URL;
 
 function ChatArea({ conversationid, activeconversation, onBack }) {
   const [showSearchbar, setshowSearchbar] = useState(false);
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
@@ -213,40 +214,129 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
     );
   }
 
+
+  function ParticipantsModal({ title, participants, onClose }) {
+    return (
+      <div className=" absolute top-full right-0 w-full max-w-md mx-auto z-50 p-2 rounded shadow-lg flex items-center bg-white">
+        <div className="mt-1 ml-1 bg-white rounded-lg shadow-lg w-96 relative">
+          <button onClick={onClose} className="absolute top-2 right-2 text-red-500 text-xl">
+            <FaTimes />
+          </button>
+          <h2 className="text-lg font-semibold mb-3">{title}</h2>
+          <ul className="space-y-2 max-h-80 overflow-y-auto">
+            {participants.map((p, idx) => (
+              <li key={idx} className=" bg-gradient-to-r from-cyan-400/50 to-cyan-700/50 flex items-center gap-3 p-2 border rounded hover:bg-yellow-100">
+                <img
+                  src={p.profile ? `${Backend_url}${p.profile}` : "/defaultuser.JPG"}
+                  className="h-10 w-10 rounded-full border"
+                />
+                <div>
+                  <p className="font-medium">{p.first_name || p.email} {p.last_name || ""}</p>
+                  <p className="text-sm text-gray-500">{p.username || ""}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 pl-1 bg-gray-200 h-full w-full font-manrope">
       <div className="w-full flex flex-col bg-white h-full">
 
+       
         {/* HEADER */}
-        <div className="flex items-center h-14 border-b px-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50 shrink-0 relative">
+        <div className="flex items-center h-14 border-b px-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50    shrink-0 relative">
+          {/* Back button for mobile */}
           <button onClick={onBack} className="md:hidden mr-2 text-xl">
             <FaArrowLeft />
           </button>
-
+          
+          {/* Profile + Name */}
           <div className="flex items-center gap-2 flex-1">
             <img
-              src={activeconversation.profile ? `${Backend_url}${activeconversation.profile}` : "/defaultuser.JPG"}
+              src={
+                activeconversation.profile
+                  ? `${Backend_url}${activeconversation.profile}`
+                  : activeconversation.is_group
+                  ? "/defaultgroup.JPG"
+                  : "/defaultuser.JPG"
+              }
               className="h-12 w-12 rounded-full border-2 border-black"
             />
+
             <div className="truncate">
-              <p className="text-lg tracking-wide font-semibold truncate">{activeconversation.title || "Chat"}</p>
+              {activeconversation.is_group ? (
+                <>
+                  <p className="text-lg tracking-wide font-semibold truncate">{activeconversation.title}</p>
+                  <p className="text-sm truncate">
+                    {activeconversation.participants?.map(
+                      p => `${p.first_name || p.email} ${p.last_name || ""}`
+                    ).join(", ")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg tracking-wide font-semibold truncate">
+                    {activeconversation.displayUser
+                      ? `${activeconversation.displayUser.first_name || activeconversation.displayUser.email} ${activeconversation.displayUser.last_name || ""}`
+                      : activeconversation.participants?.[0]
+                      ? `${activeconversation.participants[0].first_name || ""} ${activeconversation.participants[0].last_name || ""}`
+                      : "User"}
+                  </p>
+                  <p className="text-sm truncate">
+                    {activeconversation.displayUser?.username ||
+                    activeconversation.displayUser?.email ||
+                    activeconversation.participants?.[0]?.username ||
+                    activeconversation.participants?.[0]?.email ||
+                    "unknown"}
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
+          {/* Right side icons */}
           <div className="flex gap-4 text-lg">
-            <FaSearch onClick={(e)=>{e.stopPropagation(); setshowSearchbar(prev=>!prev)}} className="cursor-pointer" />
+            {/* Search toggle */}
+            <FaSearch
+              onClick={(e) => { e.stopPropagation(); setshowSearchbar(prev => !prev); }}
+              className="cursor-pointer"
+            />
             <FaPhone />
             <FaVideo />
-            <FaInfoCircle />
+            <FaInfoCircle onClick={() => setShowParticipantsModal(true)} />
           </div>
 
+          {/* Search bar overlay */}
           {showSearchbar && (
-            <div ref={searchRef} onClick={e=>e.stopPropagation()} className="absolute top-full right-0 w-full max-w-md mx-auto z-50 p-2 rounded shadow-lg flex items-center bg-white">
-              <input type="text" placeholder="Search messages" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}
-                className="w-full rounded text-black border-2 border-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"/>
-              <FaSearch className="absolute right-8 top-1/2 -translate-y-1/2 text-black"/>
+            <div
+              ref={searchRef}
+              onClick={e => e.stopPropagation()}
+              className="absolute top-full right-0 w-full max-w-md mx-auto z-50 p-2 rounded shadow-lg flex items-center bg-white"
+            >
+              <input
+                type="text"
+                placeholder="Search messages"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded text-black border-2 border-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              <FaSearch className="absolute right-8 top-1/2 -translate-y-1/2 text-black" />
             </div>
           )}
+
+          {/* convo details */}
+          {showParticipantsModal && (
+            <ParticipantsModal 
+             title={activeconversation.title || "Chat Info"}  
+              participants={activeconversation.participants || []} 
+              onClose={() => setShowParticipantsModal(false)} 
+            />
+          )}
+          
         </div>
 
         {/* MESSAGES */}
@@ -297,6 +387,32 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* IMAGE & AUDIO PREVIEW */}
+        {imagePreview && (
+          <div className="px-3 pb-2 bg-gray-100">
+            <div className="relative w-32">
+              <img src={imagePreview} className="rounded-lg border" alt="preview" />
+              <button
+                onClick={() => { setSelectedImage(null); setImagePreview(null); }}
+                className="absolute top-1 right-1 text-red-400 text-xs px-2 rounded"
+              >
+                <FaTimes />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {audioPreview && (
+          <div className="flex items-center gap-2 px-3 pb-2 bg-gray-100">
+            <audio controls src={audioPreview} className="border-2 border-black rounded-full"></audio>
+            <button onClick={() => { setAudioBlob(null); setAudioPreview(null); setIsRecording(false); }} className="text-red-500 text-2xl rounded">
+              <FaTimes />
+            </button>
+            <button onClick={sendmessage} disabled={isSending} className={`px-2 rounded text-2xl ${isSending ? "bg-gray-400" : "text-cyan-500"}`}>
+              <FaPaperPlane />
+            </button>
+          </div>
+        )}
         {/* INPUT */}
         <div className="border-t p-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50 shrink-0">
           <div className="flex items-center gap-2">
