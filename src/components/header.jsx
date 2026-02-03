@@ -10,7 +10,6 @@ function Header() {
   const [upperScreen, setUpperScreen] = useState(false);
   const [profileFile, setProfileFile] = useState(null);
   const [preview, setPreview] = useState("/defaultuser.JPG");
-  // const Backend_url = "http://localhost:8000/media/";
 
   const usernameRef = useRef();
   const emailRef = useRef();
@@ -20,9 +19,9 @@ function Header() {
 
   // Logout handler
   const handleLogout = () => {
-    logoutUser();          // Clear token and userId
-    setUpperScreen(false); // Close modal
-    navigate("/login");    // Navigate to login page
+    logoutUser();          
+    setUpperScreen(false); 
+    navigate("/login");   
   };
 
   // Fetch current user
@@ -30,7 +29,7 @@ function Header() {
     const fetchUser = async () => {
       try {
         const user = await getCurrentUser();
-        if (!user) throw new Error("User not found"); // optional, helps debugging
+        if (!user) throw new Error("User not found"); 
         setCurrentUser(user);
         setPreview(user?.profile ? `${Backend_url}${user.profile}` : "/defaultuser.JPG");
       } catch (err) {

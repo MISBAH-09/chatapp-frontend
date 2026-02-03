@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getAIConversation, sendMessage as sendAIMessage } from "../services/aiMessagesService";
 import { marked } from "marked";
-import { FaRobot, FaTimes, FaCircle } from "react-icons/fa";
+import { FaRobot, FaTimes } from "react-icons/fa";
 
 function FloatingAi() {
   const [open, setOpen] = useState(false);
@@ -10,83 +10,116 @@ function FloatingAi() {
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [isSending, setIsSending] = useState(false);
+
   const messagesEndRef = useRef(null);
+
+  /* =========================
+     Helpers
+  ========================= */
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  useEffect(scrollToBottom, [messages]);
+
+  const addAiMessageTyping = async (text, tempId) => {
+    let index = 0;
+    const interval = setInterval(() => {
+      index++;
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === tempId ? { ...m, text: text.slice(0, index) } : m
+        )
+      );
+      if (index >= text.length) clearInterval(interval);
+    }, 20);
+  };
+
+  /* =========================
+     Fetch Conversation
+  ========================= */
+
   const fetchConversation = async () => {
     try {
       const response = await getAIConversation();
-      if (response.success) {
+      if (response?.success) {
         setConversationId(response.conversation_id);
         setMessages(
-          response.messages.map((m) => ({
+          response.messages.map(m => ({
+            id: m.id,
             sender: m.sender,
             text: m.text,
-            id: m.id,
           }))
         );
-        scrollToBottom();
       }
     } catch (err) {
-      console.error("Error fetching conversation:", err);
+      console.error("Fetch conversation error:", err);
     }
   };
 
-  useEffect(() => scrollToBottom(), [messages]);
-
-  const addAiMessageTyping = async (fullText, tempId) => {
-    let displayed = "";
-    for (let char of fullText) {
-      displayed += char;
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...m, text: displayed } : m))
-      );
-      await new Promise((r) => setTimeout(r, 20));
-    }
-  };
+  /* =========================
+     Send Message
+  ========================= */
 
   const sendMessage = async () => {
     if (!messageText.trim() || isSending) return;
 
-    const userMessage = { sender: "user", text: messageText, id: Date.now() };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsSending(true);
-
-    const tempAiId = `ai-${Date.now()}`;
-    setMessages((prev) => [...prev, { sender: "ai", text: "AI is typing...", id: tempAiId }]);
-
-    const payload = {
-      conversation_id: conversationId,
-      message: messageText,
-      is_sender: true,
+    const userMsg = {
+      id: Date.now(),
+      sender: "user",
+      text: messageText,
     };
 
+    const tempAiId = Date.now() + 1;
+
+    setMessages(prev => [
+      ...prev,
+      userMsg,
+      { id: tempAiId, sender: "ai", text: "AI is thinking..." },
+    ]);
+
+    setMessageText("");
+    setIsSending(true);
+
     try {
+      const payload = {
+        conversation_id: conversationId,
+        message: userMsg.text,
+      };
+
       const response = await sendAIMessage(payload);
-      if (response.success) {
-        const aiReply = response.messages.find((m) => m.sender === "ai");
-        if (aiReply) await addAiMessageTyping(aiReply.text, tempAiId);
-        else setMessages((prev) =>
-          prev.map((m) => (m.id === tempAiId ? { ...m, text: "AI didn't return a response." } : m))
-        );
-      } else {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempAiId ? { ...m, text: "Error sending message to AI." } : m))
-        );
+
+      if (response?.success && response?.messages) {
+        // 🔥 IMPORTANT FIX: get LAST AI message
+        const aiMessages = response.messages.filter(m => m.sender === "ai");
+        const latestAi = aiMessages[aiMessages.length - 1];
+
+        if (latestAi) {
+          await addAiMessageTyping(latestAi.text, tempAiId);
+        } else {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === tempAiId ? { ...m, text: "No AI response." } : m
+            )
+          );
+        }
       }
     } catch (err) {
       console.error(err);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempAiId ? { ...m, text: "AI request failed." } : m))
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === tempAiId ? { ...m, text: "AI request failed." } : m
+        )
       );
     }
 
-    setMessageText("");
     setIsSending(false);
   };
+
+  /* =========================
+     Open / Close
+  ========================= */
 
   const handleOpen = () => {
     setShowModal(true);
@@ -98,6 +131,10 @@ function FloatingAi() {
     setOpen(false);
     setTimeout(() => setShowModal(false), 300);
   };
+
+  /* =========================
+     Render
+  ========================= */
 
   return (
     <>
