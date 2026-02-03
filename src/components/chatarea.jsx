@@ -12,7 +12,6 @@ import { getAllConversationMessages, updMessage, delMessage } from "../services/
 const Backend_url = import.meta.env.VITE_BACKEND_URL;
 
 function ChatArea({ conversationid, activeconversation, onBack }) {
-
   const [showSearchbar, setshowSearchbar] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [messageText, setMessageText] = useState("");
@@ -29,7 +28,6 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
   const [originalMessageText, setOriginalMessageText] = useState("");
 
   const messagesEndRef = useRef(null);
-  const menuRef = useRef(null);
   const searchRef = useRef(null);
 
   const { wsRef, sendMessage, connected } = useSocket();
@@ -74,14 +72,12 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
       if (message.conversation_id !== conversationid) return;
 
       setMessages((prev) => {
-        // Replace temporary message if exists
         const tempIndex = prev.findIndex(msg => msg.id.toString().startsWith("temp-") && msg.body === message.body);
         if (tempIndex !== -1) {
           const newArr = [...prev];
           newArr[tempIndex] = message;
           return newArr;
         }
-        // Avoid duplicates
         if (prev.some(msg => msg.id === message.id)) return prev;
         return [...prev, message];
       });
@@ -111,7 +107,6 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
         messageType = "audio";
       }
 
-      // ✅ Optimistic UI
       const tempId = `temp-${Date.now()}`;
       const tempMessage = {
         id: tempId,
@@ -128,7 +123,6 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
       setMessages(prev => [...prev, tempMessage]);
       scrollToBottom();
 
-      // Send to backend
       sendMessage({
         type: "chat_message",
         conversation_id: conversationid,
@@ -137,7 +131,6 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
         media: base64
       });
 
-      // Reset input
       setMessageText("");
       setSelectedImage(null);
       setImagePreview(null);
@@ -172,17 +165,21 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
   // ---------------- Click outside handlers ----------------
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpenId(null);
+      setMenuOpenId(null); // close menu if click anywhere outside
       if (searchRef.current && !searchRef.current.contains(e.target)) setshowSearchbar(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   // ---------------- Delete / Update ----------------
   const handleDelete = async (message_id) => {
-    try { await delMessage(message_id); setMenuOpenId(null); } 
+    try { 
+      await delMessage(message_id); 
+      setMessages(prev => prev.map(msg => msg.id === message_id ? { ...msg, status: "delete" } : msg));
+    } 
     catch (err) { console.error("Delete failed", err); }
+    finally { setMenuOpenId(null); }
   };
 
   const handleUpdate = (message_id ,message_body) => {
@@ -197,7 +194,7 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
     try {
       setIsSending(true);
       await updMessage(editingMessageId, messageText); 
-      setMessages(prev => prev.map(msg => msg.id === editingMessageId ? { ...msg, body: messageText } : msg));
+      setMessages(prev => prev.map(msg => msg.id === editingMessageId ? { ...msg, body: messageText, is_edited: true } : msg));
       setMessageText(""); setEditingMessageId(null); setOriginalMessageText("");
     } catch (err) { console.error("Update failed", err); } 
     finally { setIsSending(false); }
@@ -221,90 +218,40 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
       <div className="w-full flex flex-col bg-white h-full">
 
         {/* HEADER */}
-        <div className="flex items-center h-14 border-b px-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50    shrink-0 relative">
-          {/* Back button for mobile */}
+        <div className="flex items-center h-14 border-b px-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50 shrink-0 relative">
           <button onClick={onBack} className="md:hidden mr-2 text-xl">
             <FaArrowLeft />
           </button>
-          
-          {/* Profile + Name */}
+
           <div className="flex items-center gap-2 flex-1">
             <img
-              src={
-                activeconversation.profile
-                  ? `${Backend_url}${activeconversation.profile}`
-                  : activeconversation.is_group
-                  ? "/defaultgroup.JPG"
-                  : "/defaultuser.JPG"
-              }
+              src={activeconversation.profile ? `${Backend_url}${activeconversation.profile}` : "/defaultuser.JPG"}
               className="h-12 w-12 rounded-full border-2 border-black"
             />
-
             <div className="truncate">
-              {activeconversation.is_group ? (
-                <>
-                  <p className="text-lg tracking-wide font-semibold truncate">{activeconversation.title}</p>
-                  <p className="text-sm truncate">
-                    {activeconversation.participants?.map(
-                      p => `${p.first_name || p.email} ${p.last_name || ""}`
-                    ).join(", ")}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-lg tracking-wide font-semibold truncate">
-                    {activeconversation.displayUser
-                      ? `${activeconversation.displayUser.first_name || activeconversation.displayUser.email} ${activeconversation.displayUser.last_name || ""}`
-                      : activeconversation.participants?.[0]
-                      ? `${activeconversation.participants[0].first_name || ""} ${activeconversation.participants[0].last_name || ""}`
-                      : "User"}
-                  </p>
-                  <p className="text-sm truncate">
-                    {activeconversation.displayUser?.username ||
-                    activeconversation.displayUser?.email ||
-                    activeconversation.participants?.[0]?.username ||
-                    activeconversation.participants?.[0]?.email ||
-                    "unknown"}
-                  </p>
-                </>
-              )}
+              <p className="text-lg tracking-wide font-semibold truncate">{activeconversation.title || "Chat"}</p>
             </div>
           </div>
 
-          {/* Right side icons */}
           <div className="flex gap-4 text-lg">
-            {/* Search toggle */}
-            <FaSearch
-              onClick={(e) => { e.stopPropagation(); setshowSearchbar(prev => !prev); }}
-              className="cursor-pointer"
-            />
+            <FaSearch onClick={(e)=>{e.stopPropagation(); setshowSearchbar(prev=>!prev)}} className="cursor-pointer" />
             <FaPhone />
             <FaVideo />
             <FaInfoCircle />
           </div>
 
-          {/* Search bar overlay */}
           {showSearchbar && (
-            <div
-              ref={searchRef}
-              onClick={e => e.stopPropagation()}
-              className="absolute top-full right-0 w-full max-w-md mx-auto z-50 p-2 rounded shadow-lg flex items-center bg-white"
-            >
-              <input
-                type="text"
-                placeholder="Search messages"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded text-black border-2 border-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-              />
-              <FaSearch className="absolute right-8 top-1/2 -translate-y-1/2 text-black" />
+            <div ref={searchRef} onClick={e=>e.stopPropagation()} className="absolute top-full right-0 w-full max-w-md mx-auto z-50 p-2 rounded shadow-lg flex items-center bg-white">
+              <input type="text" placeholder="Search messages" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}
+                className="w-full rounded text-black border-2 border-black placeholder-gray-400 px-10 py-2 focus:outline-none focus:ring-2 focus:ring-black"/>
+              <FaSearch className="absolute right-8 top-1/2 -translate-y-1/2 text-black"/>
             </div>
           )}
         </div>
 
         {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto bg-gray-100 p-3 space-y-3">
-          {messages.map((message) => {
+          {messages.map(message => {
             const loggedUserId = parseInt(localStorage.getItem("userId"));
             const isMine = message.sender_id === loggedUserId;
 
@@ -316,29 +263,33 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
                     {message.sender_first_name || "User"} • {formatTime(message.created_at)}
                     {message.is_edited && <span className="text-xs text-gray-500 ml-2">Edited</span>}
                   </p>
+
                   <div className={`relative p-2 rounded-xl text-sm ${isMine ? "bg-blue-100" : "bg-gray-200"}`}>
                     {message.status === "delete" ? (
                       <span className="italic text-gray-500">This message was deleted by {message.sender_first_name}</span>
                     ) : (
                       <>
-                        {message.type === "image" && <img src={message.media_url?.startsWith("http") ? message.media_url : `${Backend_url}${message.media_url}`} className="rounded-lg max-w-[200px] max-h-[200px] object-cover" alt="sent image" />}
-                        {message.type === "audio" && message.media_url && <audio controls src={`${Backend_url}${message.media_url}`} onLoadedData={scrollToBottom} />}
+                        {message.type === "image" && <img src={message.media_url?.startsWith("http") ? message.media_url : `${Backend_url}${message.media_url}`} className="rounded-lg max-w-[200px] max-h-[200px] object-cover" alt="sent image"/>}
+                        {message.type === "audio" && message.media_url && <audio controls src={`${Backend_url}${message.media_url}`} onLoadedData={scrollToBottom}/>}
                         {message.type === "text" && <span>{highlightText(message.body, searchTerm)}</span>}
                       </>
                     )}
 
                     {message.status !== "delete" && isMine && (
-                      <button ref={menuRef} onMouseDown={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === message.id ? null : message.id); }} className={`absolute top-1/2 -translate-y-1/2 ${isMine ? "-left-6" : "-right-6"}`}><FaEllipsisV /></button>
+                      <button onClick={(e)=>{e.stopPropagation(); setMenuOpenId(menuOpenId===message.id?null:message.id)}} className="absolute top-1/2 -translate-y-1/2 -left-6">
+                        <FaEllipsisV />
+                      </button>
                     )}
 
                     {menuOpenId === message.id && (
-                      <div onClick={(e) => e.stopPropagation()} className={`absolute top-1 mt-2 z-50 ${isMine ? "-left-28" : "-right-28"} bg-white shadow-lg rounded-md text-sm w-24`}>
+                      <div onClick={e=>e.stopPropagation()} className="absolute top-1 mt-2 -left-28 z-50 bg-white shadow-lg rounded-md text-sm w-24">
                         <button className="block w-full text-left px-3 py-2 hover:bg-gray-100" onClick={() => handleUpdate(message.id , message.body)}>Update</button>
                         <button className="block w-full text-left px-3 py-2 hover:bg-gray-100 text-red-500" onClick={() => handleDelete(message.id)}>Delete</button>
                       </div>
                     )}
                   </div>
                 </div>
+
                 {isMine && <img src={message.sender_profile ? `${Backend_url}${message.sender_profile}` : "/defaultuser.JPG"} className="h-8 w-8 rounded-full" />}
               </div>
             );
@@ -346,45 +297,24 @@ function ChatArea({ conversationid, activeconversation, onBack }) {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* IMAGE & AUDIO PREVIEW */}
-        {imagePreview && (
-          <div className="px-3 pb-2 bg-gray-100">
-            <div className="relative w-32">
-              <img src={imagePreview} className="rounded-lg border" />
-              <button onClick={() => { setSelectedImage(null); setImagePreview(null); }} className="absolute top-1 right-1 text-red-400 text-xs px-2 rounded"><FaTimes /></button>
-            </div>
-          </div>
-        )}
-
-        {audioPreview && (
-          <div className="flex items-center gap-2 px-3 pb-2 bg-gray-100">
-            <audio controls src={audioPreview} className='border-2 border-black rounded-full'></audio>
-            <button onClick={cancelRecording} className="text-red-500 text-2xl rounded"><FaTimes /></button>
-            <button onClick={sendmessage} disabled={isSending} className={`px-2 rounded text-2xl ${isSending ? "bg-gray-400" : "text-cyan-500"}`}><FaPaperPlane /></button>
-          </div>
-        )}
-
         {/* INPUT */}
-        <div className="border-t p-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50    shrink-0">
+        <div className="border-t p-3 bg-gradient-to-r from-cyan-400/50 to-cyan-700/50 shrink-0">
           <div className="flex items-center gap-2">
-            <input type="file" accept="image/*" id="imageInput" className="hidden" onChange={(e) => {
-              const file = e.target.files[0];
-              if(file) { setSelectedImage(file); setImagePreview(URL.createObjectURL(file)); }
-            }}/>
-            <button title='Attach' onClick={() => document.getElementById("imageInput").click()}><FaPaperclip className="text-xl" /></button>
+            <input type="file" accept="image/*" id="imageInput" className="hidden" onChange={(e)=>{const file=e.target.files[0];if(file){setSelectedImage(file); setImagePreview(URL.createObjectURL(file))}}}/>
+            <button title='Attach' onClick={()=>document.getElementById("imageInput").click()}><FaPaperclip className="text-xl" /></button>
 
-            <input type="text" placeholder="Write message here" className="flex-1 px-4 py-2 border rounded-full outline-none" value={messageText} onChange={(e) => setMessageText(e.target.value)}
-              onKeyUp={(e) => {
-                if(e.key === "Enter" && !isSending) { editingMessageId ? confirmUpdate() : sendmessage(); }
-              }}
+            <input type="text" placeholder="Write message here" className="flex-1 px-4 py-2 border rounded-full outline-none" value={messageText} onChange={e=>setMessageText(e.target.value)}
+              onKeyUp={(e)=>{if(e.key==="Enter"&&!isSending){editingMessageId?confirmUpdate():sendmessage()}}}
             />
 
             {!isRecording && !audioPreview && !editingMessageId && <button onClick={startRecording} title='Voice Message'><FaMicrophone className="text-xl" /></button>}
-            {isRecording && <button onClick={stopRecording} className="text-red-600"><FaStop className='text-lg' /></button>}
+            {isRecording && <button onClick={stopRecording} className="text-red-600"><FaStop className='text-lg'/></button>}
 
-            <button onClick={editingMessageId ? confirmUpdate : sendmessage} disabled={isSending}>{editingMessageId ? <FaCheck className="text-xl text-green-600" /> : <FaPaperPlane className="text-xl" />}</button>
+            <button onClick={editingMessageId?confirmUpdate:sendmessage} disabled={isSending}>
+              {editingMessageId?<FaCheck className="text-xl text-green-600"/>:<FaPaperPlane className="text-xl"/>}
+            </button>
 
-            {editingMessageId && <button onClick={() => { setMessageText(""); setEditingMessageId(null); setOriginalMessageText(""); setSelectedImage(null); setImagePreview(null); }} className="text-red-500 ml-2"><FaTimes /></button>}
+            {editingMessageId && <button onClick={()=>{setMessageText(""); setEditingMessageId(null); setOriginalMessageText(""); setSelectedImage(null); setImagePreview(null)}} className="text-red-500 ml-2"><FaTimes/></button>}
           </div>
         </div>
       </div>
