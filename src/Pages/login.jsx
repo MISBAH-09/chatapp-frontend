@@ -88,6 +88,10 @@ function Login() {
         >
           Login
         </button>
+         <p className='text-muted text-xs mt-2'>
+            Create account?
+            <a href='/signup' className=' ml-2 font-semibold text-blue-500'>Signup</a>
+         </p>
       </div>
     </div>
   );

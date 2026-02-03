@@ -48,6 +48,30 @@ export const loginUser = async (username, email, password) => {
   }
 };
 
+
+
+export const SignupUser = async (username, email, password, first_name, last_name) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/signup/`, {
+      username,
+      email,
+      password,
+      first_name,
+      last_name,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw new Error("Server not responding");
+  }
+};
+
+
+
+
 export const getToken = () => {
   return localStorage.getItem('userToken');
 };
